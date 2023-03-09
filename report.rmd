@@ -9,12 +9,14 @@ output: html_document
 
 ## Report Exercise 1
 
+
 ### Task 1
 ```{r}
-list.files('C:/Users/noahe/OneDrive/Dokumente/Studium/Studium 4. Semester/AGDS/Data') #listing the files to find the right data
+list.files('../AGDS/Data') #listing the files to find the right data
 ```
+
 ```{r}
-database_s1<- readr::read_csv("C:/Users/noahe/OneDrive/Dokumente/Studium/Studium 4. Semester/AGDS/Data/data_csv_exercise_1.csv") # reading the .csv into R
+database_s1<- readr::read_csv("../AGDS/Data/data_csv_exercise_1.csv") # reading the .csv into R
 ```
 
 ### Task 2
@@ -26,7 +28,7 @@ sample_data_RR <- dplyr::mutate(database_s1, log_response_ratio = log((`increase
 ```{r} 
 sample_date_yearly <-  sample_data_RR|> #create new table
   dplyr::group_by(Experiment, `Sample date (year)`) |> #aggregate by experiment with subgroup sample date (in years)
-  dplyr::summarise(`log_response_ratio_mean` = mean(`log_response_ratio`)) #calculating mean within the defined groups of the values co2 (ambient and increased)
+  dplyr::summarise(`log_response_ratio_mean` = mean(`log_response_ratio`)) #calculating the mean of RR within the defined groups
 ```
 
 ```{r}
@@ -37,7 +39,7 @@ knitr::kable(sample_date_yearly)
 ### Task 3
 ```{r}
 phase_1 <- dplyr::filter(sample_data_RR, `Time (years)` <3) |>
-  dplyr::summarise(`log_response_ratio_mean` = mean(`log_response_ratio`)) #aggregate phase 1
+  dplyr::summarise(`log_response_ratio_mean` = mean(`log_response_ratio`)) #aggregate the RR of phase 1
 ```
 
 ```{r}
@@ -48,7 +50,7 @@ phase_2 <- dplyr::filter(sample_data_RR, `Time (years)` >=3 & `Time (years)`<6) 
 
 ```{r}
 phase_3 <- dplyr::filter(sample_data_RR, `Time (years)` >=6) |>
-  dplyr::summarise(`log_response_ratio_mean` = mean(`log_response_ratio`)) #aggregate phase 3
+  dplyr::summarise(`log_response_ratio_mean` = mean(`log_response_ratio`)) #aggregate the RR of phase 3
 ```
 
 ```{r}
@@ -57,12 +59,13 @@ all_phases <- dplyr::mutate(all_phases,`Phase` = c("early phase (<3 years since 
 ```
 
 ```{r}
-all_phases <- dplyr::select(all_phases,`Phase`, everything()) #placing the phase column to position one
+all_phases <- dplyr::select(all_phases,`Phase`, everything()) #moving the phase column to position one
 ```
 
 ```{r}
 knitr::kable(all_phases) #present the results as knitr::table
 ```
+
 
 
 
