@@ -8,15 +8,17 @@ output: html_document
 # AGDS Report
 
 ## Report Exercise 1
+```{r}
+getwd()
+```
 
 
 ### Task 1
 ```{r}
-list.files('../AGDS/Data') #listing the files to find the right data
+list.files('Data') #listing the files to find the right data
 ```
-
 ```{r}
-database_s1<- readr::read_csv("../AGDS/Data/data_csv_exercise_1.csv") # reading the .csv into R
+database_s1<- readr::read_csv("Data/data_csv_exercise_1.csv") # reading the .csv into R
 ```
 
 ### Task 2
