@@ -11,7 +11,7 @@ output: html_document
 airquality <- datasets::airquality #loading the data set and creating a table
 ```
 
-```{r}
+```{r eval=FALSE}
 ?datasets::airquality #getting the necessary background information
 ```
 
@@ -19,7 +19,9 @@ airquality <- datasets::airquality #loading the data set and creating a table
 visdat::vis_miss(airquality) #checking for missing values
 ```
 One can see that a big part of the ozone values are missing with 24%. But the Solar radiation has missing values as well (5%). This will be important to consider if one of these two is used. (especially important for the interpretation)
+
 ## Task 1
+
 ### figures
 
 ```{r}
@@ -29,7 +31,8 @@ airquality_2 <- airquality_2 |>
 ```
 
 # Figure 1 - (Geom_line)
-```{r}
+disclaimer: Solar Radiation has missing values. Due to that the quality of the data and therefore of the figure is  limited
+```{r message=FALSE}
 ggplot2::ggplot(
   airquality_2,
   ggplot2::aes(x = Solar.R, y = Temp)) + #defining the axes
@@ -46,7 +49,8 @@ airquality_3 <- airquality |>
 ```
 
 #### Figure 2
-```{r}
+disclaimer: Solar Radiation has missing values, due to that 7 rows got removed. I decided to set the warning to FALSE for a more pleasant presentation in the html.
+```{r message=FALSE, warning=FALSE}
 ggplot2::ggplot(airquality_3, ggplot2::aes(y = Temp, x = Solar.R)) + #defining the axes
   ggplot2::geom_point() + # defining the type of graphic
   ggplot2::labs(y ="Temperature [in Fahrenheit]",
@@ -56,7 +60,8 @@ ggplot2::ggplot(airquality_3, ggplot2::aes(y = Temp, x = Solar.R)) + #defining t
 
 
 #### Figure 3
-```{r}
+disclaimer: Solar Radiation has missing values, due to that 7 rows got removed. I decided to set the warning to FALSE for a more pleasant presentation in the html.
+```{r message=FALSE, warning=FALSE}
 library(ggplot2)
 ggplot(
     airquality_3,
