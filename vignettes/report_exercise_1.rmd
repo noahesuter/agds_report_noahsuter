@@ -12,28 +12,33 @@ output: html_document
 ### Task 1
 
 
-```{r}
+```{r results='hide'}
 list.files('../data') #listing the files to find the right data
 ```
 
-```{r}
+```{r results='hide', message=FALSE}
 database_s1<- readr::read_csv("../data/data_csv_exercise_1.csv") # reading the .csv into R
 ```
 
+```{r}
+visdat::vis_miss(database_s1)
+```
+
+
 ### Task 2
 
-```{r}
+```{r results='hide'}
 sample_data_RR <- dplyr::mutate(database_s1, log_response_ratio = log((`increased CO2`/`ambient CO2`))) #calculate the RR and add as a new column
 ```
 
-```{r} 
+```{r results='hide', message=FALSE} 
 sample_date_yearly <-  sample_data_RR|> #create new table
   dplyr::group_by(Experiment, `Sample date (year)`) |> #aggregate by experiment with subgroup sample date (in years)
   dplyr::summarise(`log_response_ratio_mean` = mean(`log_response_ratio`)) #calculating the mean of RR within the defined groups
 ```
 
 ```{r}
-knitr::kable(sample_date_yearly)
+knitr::kable(sample_date_yearly[1:10,])
 #present the results as knitr::kable()
 ```
 

@@ -68,6 +68,7 @@ ggplot(
   scale_x_continuous(expand = c(0, 0)) +  # avoid gap between plotting area and axis
   scale_y_continuous(expand = c(0, 0)) #same for other axis
 ```
+
 ## Task 2
 The two metrics i worked with are Temperature and Solar radiation. Good statistical metrics could be the mean, the median or the standard deviation. I chose those to look at the range and distribution of the values as this can show certain things like whether there are more values below of above the mean or how far they are off the mean on average.
 
