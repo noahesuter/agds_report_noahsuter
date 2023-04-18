@@ -14,6 +14,11 @@ airquality <- datasets::airquality #loading the data set and creating a table
 ```{r}
 ?datasets::airquality #getting the necessary background information
 ```
+
+```{r}
+visdat::vis_miss(airquality) #checking for missing values
+```
+One can see that a big part of the ozone values are missing with 24%. But the Solar radiation has missing values as well (5%). This will be important to consider if one of these two is used. (especially important for the interpretation)
 ## Task 1
 ### figures
 
@@ -70,7 +75,7 @@ ggplot(
 ```
 
 ## Task 2
-The two metrics i worked with are Temperature and Solar radiation. Good statistical metrics could be the mean, the median or the standard deviation. I chose those to look at the range and distribution of the values as this can show certain things like whether there are more values below of above the mean or how far they are off the mean on average.
+The two metrics i worked with are Temperature and Solar radiation. Therefore it is important to say that the metric Solar Radiation has a missing value percentage of 5% which can influence the results. Good statistical metrics could be the mean, the median or the standard deviation. I chose those to look at the range and distribution of the values as this can show certain things like whether there are more values below of above the mean or how far they are off the mean on average.
 
 ```{r}
 mean(airquality_3$Solar.R, na.rm = TRUE)
@@ -93,5 +98,5 @@ Following these thoughts, i created the following thesis:
 
 "increased solar radiation leads to higher temperature in the atmosphere"
 
-This thesis cannot be confirmed due to various reasons. One is the depth of the data. As the data only presents one value per day, the correleation cannot be proved. Another reason is how the data was measured. On one hand the Temperature is shown as the maximum that was reached that day. The Solar radiation has been measured from 0800 hours to 1200 hours and therefore not over the whole day. Therefore, it is already difficult to compare these two and even harder to determine a relation. Another big problem is the place where these data has been measured. Because the Solar radiation was measured at the Central Park in NYC while the Temperature was measured at the LAGuardia Airport.
+This thesis cannot be confirmed due to various reasons. One is the depth of the data. As the data only presents one value per day, the correleation cannot be proved. A second reason is that the metric Solar Radiation has missing values (5%). Another reason is how the data was measured. On one hand the Temperature is shown as the maximum that was reached that day. The Solar radiation has been measured from 0800 hours to 1200 hours and therefore not over the whole day. Therefore, it is already difficult to compare these two and even harder to determine a relation. Another big problem is the place where these data has been measured. Because the Solar radiation was measured at the Central Park in NYC while the Temperature was measured at the LAGuardia Airport. 
 Overall it can be said that due to the depth of the data (only daily) and due to different measurement locations and types the comparison of them does not make that much sense. And it definitly does not make sense trying to determine a relation or a correlation between these two metrics.

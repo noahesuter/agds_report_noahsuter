@@ -21,8 +21,10 @@ database_s1<- readr::read_csv("../data/data_csv_exercise_1.csv") # reading the .
 ```
 
 ```{r}
-visdat::vis_miss(database_s1)
+visdat::vis_miss(database_s1) #checking for missing values
 ```
+
+The missing values all occur within the column of the sample date. Thus, there are experiments in which the date of execution is not given. This does matter in the way that the experiments are not being separated, even though they would have been in different years (Important for the task 2 where the data is grouped by the experiment and the sample date). But the rest of the data is not missing and "only" the date of the execution is not given all the time. 
 
 
 ### Task 2
