@@ -1,0 +1,10 @@
+---
+title: "re_stepwise"
+author: "Noah Suter"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# AGDS Report
+
+## Report Exercise 3
+
