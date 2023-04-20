@@ -12,7 +12,7 @@ output: html_document
 ### Task 1
 
 ```{r}
-setwd("~/Studium/Studium 4. Semester/AGDS/agds_report_noahsuter/vignettes")
+setwd("~/Studium/Studium 4. Semester/AGDS/agds_report_noahsuter/vignettes") #setting the right working directory
 ```
 
 ```{r results='hide'}
