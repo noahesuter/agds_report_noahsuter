@@ -8,3 +8,54 @@ output: html_document
 
 ## Report Exercise 3
 
+```{r results='hide'}
+list.files('../data') #listing the files to find the right data
+```
+```{r results='hide', message=FALSE}
+half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") # reading the data into R
+```
+
+```{r}
+visdat::vis_miss(half_hourly_fluxes) #checking for missing values
+```
+
+```{r}
+FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes) # create an empty model with just an intercept
+
+```
+```{r}
+
+half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving our response variable (GPP) column to position one
+```
+
+
+```{r}
+mod_summaries <- list() 
+```
+
+```{r}
+for(i in 2:ncol(half_hourly_fluxes_new_order)) {                 # Head of for-loop
+ 
+  predictors_i <- colnames(half_hourly_fluxes_new_order)[i]    # Create vector of predictor names
+  mod_summaries[[i - 1]] <- summary(     # Store regression model summary in list
+    lm(GPP_NT_VUT_REF ~ ., half_hourly_fluxes_new_order[ , c("GPP_NT_VUT_REF", predictors_i)]))
+ 
+}
+```
+
+```{r}
+mod_summaries
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
