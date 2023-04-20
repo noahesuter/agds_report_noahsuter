@@ -18,13 +18,13 @@ half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") 
 ```{r}
 visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
-
+Due to missing values the R squared values could be influenced and therefore the highest R squared could be wrongly qualified as the highest. This would lead to a wrong decision in the sense of what predictor should be used for the model. But it won't be possible to leave the missing values out as the length of the columns would not match and therefore the modelling process would not be possible.
 ```{r}
 FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes) # create an empty model with just an intercept
 
 ```
-```{r}
 
+```{r}
 half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving our response variable (GPP) column to position one
 ```
 
@@ -43,8 +43,76 @@ for(i in 2:ncol(half_hourly_fluxes_new_order)) {                 # Head of for-l
 }
 ```
 
-```{r}
+```{r results='hide'}
 mod_summaries
+```
+
+```{r}
+for(i in 2:ncol(half_hourly_fluxes_new_order)) {                 # Head of for-loop
+ 
+  predictors_i <- colnames(half_hourly_fluxes_new_order)[i]    # Create vector of predictor names
+  mod_summaries[[i - 1]] <- summary(     # Store regression model summary in list
+    lm(GPP_NT_VUT_REF ~ ., half_hourly_fluxes_new_order[ , c("GPP_NT_VUT_REF", predictors_i)]))
+ 
+}
+```
+```{r}
+r_squared_level_1 <- list() 
+```
+
+
+```{r}
+for (i in 1:16){
+  r_squared_level_1[[i]] <- (mod_summaries[[i]]$r.squared)
+}
+```
+
+```{r}
+library(base)
+highest_index <- which.max(r_squared_level_1)
+highest_index
+```
+
+```{r}
+mod_summaries[[15]]$r.squared
+```
+
+PPFD_IN as the predictor has the highest R squared. But through the analysis of the data and the missing values we were able to see that there where missing values of 20%. Therefore it can be that the missing values made the R squared to be higher and therefore the model to be of less quality.
+
+
+```{r}
+graphics::plot(half_hourly_fluxes_new_order[,16], half_hourly_fluxes_new_order[,1], xlab = "PPFD_IN", ylab = "GPP")
+abline(lm(half_hourly_fluxes_new_order[,1]~world_meat[,16]), col = 'red')
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(half_hourly_fluxes_new_order, aes(x = PPFD_IN , y = GPP_NT_VUT_REF)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5) +
+  labs(x = "PPFD_IN", y = "GPP_NT_VUT_REF",
+       title = "Regression between GGP and PPFD")
+```
+
+```{r}
+half_hourly_fluxes_new_order_2 <- dplyr::select(half_hourly_fluxes_new_order,`GPP_NT_VUT_REF`, `PPFD_IN`, everything()) #moving the first predictor to position 2
+
+```
+
+```{r}
+mod_summaries_2 <- list()
+```
+
+```{r}
+for(i in 3:ncol(half_hourly_fluxes_new_order_2)) {                 # Head of for-loop
+ 
+  predictors_i_2 <- colnames(half_hourly_fluxes_new_order_2)[i]    # Create vector of predictor names
+  mod_summaries_2[[i - 2]] <- summary(     # Store regression model summary in list
+    lm(half_hourly_fluxes_new_order_2$GPP_NT_VUT_REF ~ half_hourly_fluxes_new_order_2$PPFD_IN + half_hourly_fluxes_new_order_2[ , c("GPP_NT_VUT_REF","PPFD_IN", predictors_i_2)]))
+ 
+}
+mod_summaries_2
 ```
 
 
