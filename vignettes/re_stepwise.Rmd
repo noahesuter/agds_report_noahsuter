@@ -30,7 +30,7 @@ half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF
 
 
 ```{r}
-mod_summaries <- list() 
+mod_summaries <- list() #adding a empty list
 ```
 
 ```{r}
