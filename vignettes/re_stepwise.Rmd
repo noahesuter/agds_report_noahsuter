@@ -11,6 +11,7 @@ output: html_document
 ```{r results='hide'}
 list.files('../data') #listing the files to find the right data
 ```
+
 ```{r results='hide', message=FALSE}
 half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") # reading the data into R
 ```
@@ -19,14 +20,11 @@ half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") 
 visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
 Due to missing values the R squared values could be influenced and therefore the highest R squared could be wrongly qualified as the highest. This would lead to a wrong decision in the sense of what predictor should be used for the model. But it won't be possible to leave the missing values out as the length of the columns would not match and therefore the modelling process would not be possible.
-```{r}
-FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes) # create an empty model with just an intercept
-```
+
 
 ```{r}
 half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving our response variable (GPP) column to position one
 ```
-
 
 ```{r}
 mod_summaries <- list() #adding a empty list
@@ -43,60 +41,53 @@ for(i in 2:ncol(half_hourly_fluxes_new_order)) {                 # Head of for-l
 ```
 
 ```{r results='hide'}
-mod_summaries
+mod_summaries #loading the summaries produced in the junk before
 ```
 
+
 ```{r}
-for(i in 2:ncol(half_hourly_fluxes_new_order)) {                 # Head of for-loop
- 
-  predictors_i <- colnames(half_hourly_fluxes_new_order)[i]    # Create vector of predictor names
-  mod_summaries[[i - 1]] <- summary(     # Store regression model summary in list
-    lm(GPP_NT_VUT_REF ~ ., half_hourly_fluxes_new_order[ , c("GPP_NT_VUT_REF", predictors_i)]))
- 
-}
-```
-```{r}
-r_squared_level_1 <- list() 
+r_squared_level_1 <- list() #creating a empty list
 ```
 
 
 ```{r}
 for (i in 1:16){
   r_squared_level_1[[i]] <- (mod_summaries[[i]]$r.squared)
-}
+} #extracting all the R squared of the bivariate models (single predictor)
 ```
 
 ```{r}
 library(base)
 highest_index <- which.max(r_squared_level_1)
-highest_index
+highest_index #extracting the position of the highest R squared
 ```
-
+(for position in table +1 must be added. Results in PPFD_IN being the first predicter as it has the highest R squared)
 ```{r}
-mod_summaries[[15]]$r.squared
+mod_summaries[[15]]$r.squared #looking up the highest R squared
 ```
 
 PPFD_IN as the predictor has the highest R squared. But through the analysis of the data and the missing values we were able to see that there where missing values of 20%. Therefore it can be that the missing values made the R squared to be higher and therefore the model to be of less quality.
 
 
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(ggplot2)
 
 ggplot(half_hourly_fluxes_new_order, aes(x = PPFD_IN , y = GPP_NT_VUT_REF)) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE, size = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.5) +
   labs(x = "PPFD_IN", y = "GPP_NT_VUT_REF",
-       title = "Regression between GGP and PPFD")
+       title = "Regression between GGP and PPFD") #plotting the result of the regression with one predictor
 ```
 
+Disclaimer: All the rows containing missing values got removed (6137 rows). 
 ```{r}
 half_hourly_fluxes_new_order_2 <- dplyr::select(half_hourly_fluxes_new_order,`GPP_NT_VUT_REF`, `PPFD_IN`, everything()) #moving the first predictor to position 2
 
 ```
 
 ```{r}
-mod_summaries_2 <- list()
+mod_summaries_2 <- list() #creating a empty list for next loop
 ```
 
 
