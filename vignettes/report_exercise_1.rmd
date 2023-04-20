@@ -11,6 +11,9 @@ output: html_document
 
 ### Task 1
 
+```{r}
+setwd("~/Studium/Studium 4. Semester/AGDS/agds_report_noahsuter/vignettes")
+```
 
 ```{r results='hide'}
 list.files('../data') #listing the files to find the right data
