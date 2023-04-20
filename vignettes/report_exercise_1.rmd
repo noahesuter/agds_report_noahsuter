@@ -11,6 +11,10 @@ output: html_document
 
 ### Task 1
 
+```{r}
+dir_script <- dirname(rstudioapi::getSourceEditorContext()$path)#setting the working directory
+setwd(dir_script)
+```
 
 ```{r results='hide'}
 list.files('../data') #listing the files to find the right data
