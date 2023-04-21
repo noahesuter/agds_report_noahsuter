@@ -6,7 +6,7 @@ output: html_document
 ---
 # AGDS Report
 
-## Report Exercise 3
+## Report Exercise 4
 
 ```{r results='hide'}
 list.files('../data') #listing the files to find the right data
@@ -90,6 +90,30 @@ half_hourly_fluxes_new_order_2 <- dplyr::select(half_hourly_fluxes_new_order,`GP
 mod_summaries_2 <- list() #creating a empty list for next loop
 ```
 
+```{r}
+FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_new_order_2)
+FitStart
+```
+
+```{r}
+FitAll <- lm(GPP_NT_VUT_REF ~ ., data = half_hourly_fluxes_new_order_2)
+FitAll
+stats::formula(FitAll)
+```
+```{r}
+stats::step(FitStart, direction = "forward", scope = formula(FitAll))
+```
+
+Due to missing values the model does not work. Because of that the number of lines are not the same within all the predictors as the missing values are being removed. Therefore a decision needs to be done. Either the columns with missing values can not be used for modelling. But that could make the model worse as good predicors might not be taken into account (one example would be the first predictor PPFD_IN). Data loss and bias data
+
+Option one: Deleting the missing values (per example with na.omit())
+But this is problematic if there are a lot of missing values. As seen by the analysis of the missing data, some columns have a lot of missing values. Therefore this option has the problem of data loss as a result. Due to the high number of missing values this method is not my prefered option.
+
+Option two: Imputing missing values with a reasonable estimate would be the second option. One way would be to do it with the mice package. The problem is that we could be achieving bias data by doing that.
+
+Option three: Model-based imputation would be the third option. But as one would need to build a model for that which could take up a lot of time. DUe to the fact that this option is the most time consuming i prefer option 2 over option 3.
+
+Therefore, I decided to try to impute the missing values by using the mice package and then look at the results using this method.
 
 
 
