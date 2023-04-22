@@ -21,6 +21,13 @@ visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
 Due to missing values the R squared values could be influenced and therefore the highest R squared could be wrongly qualified as the highest. This would lead to a wrong decision in the sense of what predictor should be used for the model. But it won't be possible to leave the missing values out as the length of the columns would not match and therefore the modelling process would not be possible.
 
+```{r}
+summary(half_hourly_fluxes)
+```
+
+here we can see the exact numbers of missing values (NA)
+
+
 
 ```{r}
 half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving our response variable (GPP) column to position one
@@ -86,9 +93,6 @@ half_hourly_fluxes_new_order_2 <- dplyr::select(half_hourly_fluxes_new_order,`GP
 
 ```
 
-```{r}
-mod_summaries_2 <- list() #creating a empty list for next loop
-```
 
 ```{r}
 FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_new_order_2)
@@ -100,7 +104,7 @@ FitAll <- lm(GPP_NT_VUT_REF ~ ., data = half_hourly_fluxes_new_order_2)
 FitAll
 stats::formula(FitAll)
 ```
-```{r}
+```{r error=TRUE}
 stats::step(FitStart, direction = "forward", scope = formula(FitAll))
 ```
 
@@ -113,18 +117,57 @@ Option two: Imputing missing values with a reasonable estimate would be the seco
 
 Option three: Model-based imputation would be the third option. But as one would need to build a model for that which could take up a lot of time. DUe to the fact that this option is the most time consuming i prefer option 2 over option 3.
 
-Therefore, I decided to try to impute the missing values by using the mice package and then look at the results using this method.
+Therefore, I decided to try to impute the missing values by using the mice package and then look at the results using this method. For best results i will try option 1 and option 2
 
 
+### Option 1 - deleting the rows with the missing values
+```{r}
+half_hourly_fluxes_op1 <- stats::na.omit(half_hourly_fluxes) #deleting all the rows with missing values
+```
 
 
+```{r}
+FitStart_1 <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_op1)
+FitStart
+```
+
+```{r}
+FitAll_1 <- lm(GPP_NT_VUT_REF ~ ., data = half_hourly_fluxes_op1)
+stats::formula(FitAll_1)
+```
 
 
+```{r results='hide'}
+stats::step(FitStart_1, direction = "forward", scope = formula(FitAll_1))
+
+```
 
 
+### Option 2 - Imputing with the mice function
 
+```{r}
+str(half_hourly_fluxes)
+```
+```{r}
+mice::md.pattern(half_hourly_fluxes)
+```
 
+```{r}
+imp_data <- mice::mice(half_hourly_fluxes, m = 57 , maxit = 10, seed = 12345, print = FALSE)
+```
 
+```{r}
+imp_data
+```
+
+```{r}
+plot(imp_data)
+```
+
+we can see a trend (per example the SF_IN_F_MDS going up, we need to increase the maxit)
+```{r}
+
+```
 
 
 
