@@ -8,6 +8,8 @@ output: html_document
 
 ## Report Exercise 4
 
+### Preparing the data
+
 ```{r results='hide'}
 list.files('../data') #listing the files to find the right data
 ```
@@ -19,18 +21,16 @@ half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") 
 ```{r}
 visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
-Due to missing values the R squared values could be influenced and therefore the highest R squared could be wrongly qualified as the highest. This would lead to a wrong decision in the sense of what predictor should be used for the model. But it won't be possible to leave the missing values out as the length of the columns would not match and therefore the modelling process would not be possible.
+We can see that some columns do have a lot of missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model
 
-```{r}
-summary(half_hourly_fluxes)
+```{r results='hide'}
+summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) per row
 ```
 
-here we can see the exact numbers of missing values (NA)
-
-
+### Task 1 - Evaluation of all the bivariate models
 
 ```{r}
-half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving our response variable (GPP) column to position one
+half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving the column of the response variable (GPP) to position one
 ```
 
 ```{r}
@@ -44,11 +44,11 @@ for(i in 2:ncol(half_hourly_fluxes_new_order)) {                 # Head of for-l
   mod_summaries[[i - 1]] <- summary(     # Store regression model summary in list
     lm(GPP_NT_VUT_REF ~ ., half_hourly_fluxes_new_order[ , c("GPP_NT_VUT_REF", predictors_i)]))
  
-}
+} # producting all the bivariate models
 ```
 
 ```{r results='hide'}
-mod_summaries #loading the summaries produced in the junk before
+mod_summaries #loading the summaries 
 ```
 
 
@@ -68,13 +68,17 @@ library(base)
 highest_index <- which.max(r_squared_level_1)
 highest_index #extracting the position of the highest R squared
 ```
-(for position in table +1 must be added. Results in PPFD_IN being the first predicter as it has the highest R squared)
+for the exact position in table +1 must be added to find the right predictor (as the response variable is position and the count does not start there). Results in PPFD_IN being the first predictor as it has the highest R squared. But this was the result working with missing values and therefore could be different if the missing values were imputed or deleted.
 ```{r}
 mod_summaries[[15]]$r.squared #looking up the highest R squared
 ```
 
 PPFD_IN as the predictor has the highest R squared. But through the analysis of the data and the missing values we were able to see that there where missing values of 20%. Therefore it can be that the missing values made the R squared to be higher and therefore the model to be of less quality.
 
+```{r}
+model_task_1 <- lm(GPP_NT_VUT_REF ~ PPFD_IN, data = half_hourly_fluxes)#computing the AIC
+stats::extractAIC(model_task_1)
+```
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -88,47 +92,53 @@ ggplot(half_hourly_fluxes_new_order, aes(x = PPFD_IN , y = GPP_NT_VUT_REF)) +
 ```
 
 Disclaimer: All the rows containing missing values got removed (6137 rows). 
+
+If we take a look at the information regarding the data we can see that PPFD_IN stands for the "Photosynthetic photon flux density, incoming". GPP_NT_VUT_REF stands for "Gross Primary Production" and the method states that is has been done in Nighttime (Nighttime partitioning method). 
+
+One can assume that there is a correlation, but one cannot assume a dependence because of this.
+One aspect is, that for the first task the data with missing values was used. As both the GPP and the PPFD had missing values, the quality of the data to produce this model was restricted.  But PPFD showed the highest R squared value and therefore was chosen as the first predictor for GPP. If we look at the AIC value we can see that it is close to  29689.54. This value can be used later on for a comparison with the multiple regression models. Then a statement of the model quality interpreted by the AIC value can be made.
+
 ```{r}
 half_hourly_fluxes_new_order_2 <- dplyr::select(half_hourly_fluxes_new_order,`GPP_NT_VUT_REF`, `PPFD_IN`, everything()) #moving the first predictor to position 2
 
 ```
 
 
-```{r}
+```{r results='hide', message=FALSE}
 FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_new_order_2)
-FitStart
+FitStart #Start with an empty model (just intercept)
 ```
 
-```{r}
+```{r results='hide', message=FALSE}
 FitAll <- lm(GPP_NT_VUT_REF ~ ., data = half_hourly_fluxes_new_order_2)
-FitAll
-stats::formula(FitAll)
+FitAll # creating a model with all the predictors
+stats::formula(FitAll) #printing the full formula
 ```
-```{r error=TRUE}
-stats::step(FitStart, direction = "forward", scope = formula(FitAll))
+```{r error=TRUE, warning=FALSE, results='hide'}
+stats::step(FitStart, direction = "forward", scope = formula(FitAll)) # doing the stepwise forward regression
 ```
 
-Due to missing values the model does not work. Because of that the number of lines are not the same within all the predictors as the missing values are being removed. Therefore a decision needs to be done. Either the columns with missing values can not be used for modelling. But that could make the model worse as good predicors might not be taken into account (one example would be the first predictor PPFD_IN). Data loss and bias data
+Due to missing values the model does not work. Because of that the number of lines are not the same within all the predictors as the missing values are being removed. 
+
+That means that the Missing Values must be handled differently. 
+There are two main problems that come from handling missing data. If we delete it then we have missing data which affect the quality of the data set. The other option is to impute the missing values with a reasonable estimate. But there the problem of the data bias arises as the quality of the imputed data is an estimate and can have errors. These errors can lead to a worse model. Therefore we will need to try both methods and look what models proves to be better in the end.
 
 Option one: Deleting the missing values (per example with na.omit())
-But this is problematic if there are a lot of missing values. As seen by the analysis of the missing data, some columns have a lot of missing values. Therefore this option has the problem of data loss as a result. Due to the high number of missing values this method is not my prefered option.
-
-Option two: Imputing missing values with a reasonable estimate would be the second option. One way would be to do it with the mice package. The problem is that we could be achieving bias data by doing that.
-
-Option three: Model-based imputation would be the third option. But as one would need to build a model for that which could take up a lot of time. DUe to the fact that this option is the most time consuming i prefer option 2 over option 3.
-
-Therefore, I decided to try to impute the missing values by using the mice package and then look at the results using this method. For best results i will try option 1 and option 2
 
 
-### Option 1 - deleting the rows with the missing values
+Option two: Imputing missing values with a reasonable estimate (per example with the mice function)
+
+Disclaimer: I chose not to check for outliers as the dataset is quite big and therefore an outlier has less weigt on the whole data.
+
+
+### Task 2 - Option 1 - deleting the rows with the missing values
 ```{r}
 half_hourly_fluxes_op1 <- stats::na.omit(half_hourly_fluxes) #deleting all the rows with missing values
 ```
 
 
 ```{r}
-FitStart_1 <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_op1)
-FitStart
+FitStart_1 <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_op1) # creating an empty model (just intercepter)
 ```
 
 ```{r}
@@ -138,36 +148,86 @@ stats::formula(FitAll_1)
 
 
 ```{r results='hide'}
-stats::step(FitStart_1, direction = "forward", scope = formula(FitAll_1))
-
+model_op1 <- stats::step(FitStart_1, direction = "forward", scope = formula(FitAll_1)) #creating the stepwise forward model
+stats::formula(model_op1) #checking for the final formula
 ```
 
 
-### Option 2 - Imputing with the mice function
+### Task 2 - Option 2 - Imputing with the mice function
+
+
+```{r results='hide', fig.keep='last'}
+mice::md.pattern(half_hourly_fluxes) #checking the pattern of the missing data
+```
+
+```{r warning=FALSE}
+imp_data <- mice::mice(half_hourly_fluxes, m = 57 , maxit = 15, seed = 12345, print = FALSE) #setting the mice options
+```
+
+```{r results='hide'}
+imp_data #checking the used methods
+```
+
+
+
 
 ```{r}
-str(half_hourly_fluxes)
+plot(imp_data) #checking if convergence was achieved
 ```
+
+we can see a trend within the sd of SW_IN_F_MDS but as it is stable forward from approximately the value 5 it should work. The rest seems not to reveal any trend that would indicate a maxit that is too low in the mice function
+
 ```{r}
-mice::md.pattern(half_hourly_fluxes)
+reg_fit_mi <- with(imp_data, lm(GPP_NT_VUT_REF ~ siteid + TIMESTAMP + TA_F + SW_IN_F + LW_IN_F + 
+    VPD_F + PA_F + P_F + WS_F + TA_F_MDS + SW_IN_F_MDS + LW_IN_F_MDS + 
+    VPD_F_MDS + CO2_F_MDS + PPFD_IN + USTAR)) #running the regression for each imputed dataset
 ```
 
 ```{r}
-imp_data <- mice::mice(half_hourly_fluxes, m = 57 , maxit = 10, seed = 12345, print = FALSE)
+model_op2 <- mice::pool(reg_fit_mi) #pooling the results
+```
+
+### Task 3 - Compare the models 
+```{r results='hide'}
+summary(model_op2)
+```
+```{r results='hide'}
+summary(model_op1)
+```
+
+We can see that the standard error of the second model is systematically lower than the one from the first option.
+
+for a conclusive comparison we will look at the R squared and the AIC values of the two models of task 2 as well as the model from task 1 (bivariate model). 
+
+```{r}
+model_task_1_r2 <- summary(model_task_1)$r.squared  
+model_task_1_r2
 ```
 
 ```{r}
-imp_data
+model_op1_r2 <- summary(model_op1)$r.squared  
+model_op1_r2
 ```
 
 ```{r}
-plot(imp_data)
+model_op2_r2 <- mice::pool.r.squared(reg_fit_mi)
+model_op1_r2#r squared of model option 2
 ```
-
-we can see a trend (per example the SF_IN_F_MDS going up, we need to increase the maxit)
 ```{r}
-
+stats::extractAIC(model_task_1) #AIC bivariate model task 1
 ```
+
+
+```{r}
+stats::extractAIC(model_op1) #AIC model option 1
+```
+
+```{r}
+stats::extractAIC(model_op2) #AIC model option 2
+```
+
+
+
 
 
 
