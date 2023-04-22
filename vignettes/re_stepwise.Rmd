@@ -222,10 +222,11 @@ stats::extractAIC(model_task_1) #AIC bivariate model task 1
 ```{r}
 stats::extractAIC(model_op1) #AIC model option 1
 ```
-
-```{r}
-stats::extractAIC(model_op2) #AIC model option 2
+```{r error=TRUE}
+stats::extractAIC(model_op2) #AIC model option 2 - how do i get that?
 ```
+
+
 
 
 
