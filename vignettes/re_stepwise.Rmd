@@ -197,6 +197,7 @@ summary(model_op1)
 
 We can see that the standard error of the second model is systematically lower than the one from the first option.
 
+### Conclusive Comparison
 for a conclusive comparison we will look at the R squared and the AIC values of the two models of task 2 as well as the model from task 1 (bivariate model). 
 
 ```{r}
