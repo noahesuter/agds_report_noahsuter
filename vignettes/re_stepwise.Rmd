@@ -21,6 +21,7 @@ half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") 
 ```{r}
 visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
+
 We can see that some columns do have a lot of missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model
 
 ```{r results='hide'}
