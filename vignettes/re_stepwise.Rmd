@@ -201,12 +201,12 @@ for a conclusive comparison we will look at the R squared and the AIC values of 
 
 ```{r}
 model_task_1_r2 <- summary(model_task_1)$r.squared  
-model_task_1_r2
+model_task_1_r2 #r squared of model task 1
 ```
 
 ```{r}
 model_op1_r2 <- summary(model_op1)$r.squared  
-model_op1_r2
+model_op1_r2 #r squared of model option 1
 ```
 
 ```{r}
