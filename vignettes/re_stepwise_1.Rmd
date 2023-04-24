@@ -1,0 +1,187 @@
+---
+title: "re_stepwise_1"
+author: "Noah Suter"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# AGDS Report
+
+## Report Exercise 4
+
+### Preparing the data
+
+
+```{r results='hide'}
+list.files('../data') #listing the files to find the right data
+```
+
+```{r results='hide', message=FALSE}
+half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") # reading the data into R
+```
+
+```{r}
+visdat::vis_miss(half_hourly_fluxes) #checking for missing values
+```
+
+We can see that some columns do have a lot of missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model
+
+
+```{r results='hide'}
+summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) per row
+```
+
+```{r}
+half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving the column of the response variable (GPP) to position one
+```
+
+
+## creating a loop
+
+```{r}
+# response variable
+res_start = 1
+res_end = 1
+res_nvar = res_end - res_start + 1
+
+# predictors
+pre_start=2
+pre_end = 17
+pre_nvar= pre_end - pre_start + 1
+
+pre_AIC= rep(NA, pre_nvar)
+pre_R2= rep(NA, pre_nvar)
+pre_aR2= rep(NA, res_nvar)
+
+number = 1
+```
+
+```{r}
+library(lme4)
+library(stats)
+  response = colnames(half_hourly_fluxes_new_order) [1]
+  for (i in pre_start:pre_end) {
+    predictors = colnames(half_hourly_fluxes_new_order) [i]
+    model <- lme4::lmer(GPP_NT_VUT_REF ~ get(predictors) + PPFD_IN + (1|siteid),
+    na.action = na.exclude,
+    data = half_hourly_fluxes_new_order)
+    
+    
+    pre_AIC[number] = as.numeric(stats::extractAIC(model)[2])
+
+    number = number + 1
+  }
+
+    
+```
+
+
+
+
+
+```{r}
+# creating a corresponding dataframe with the results
+response = data.frame(res_variable, res_beta, res_se, res_pvalue)
+predictors = data.frame(pre_variable, pre_beta, pre_se, pre_pvalue)
+```
+
+```{r}
+response
+```
+
+```{r}
+predictors
+```
+
+
+```{r}
+
+
+# Define your response variable and predictor variables
+response <- half_hourly_fluxes_new_order$GPP_NT_VUT_REF
+predictors <- half_hourly_fluxes_new_order[, c("siteid","TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F", "VPD_F", "PA_F", "P_F", "WS_F", "TA_F_MDS", "SW_IN_F_MDS", "LW_IN_F_MDS", "VPD_F_MDS", "CO2_F_MDS", "PPFD_IN", "USTAR")]
+
+# Fit the initial model with just the intercept
+model <- lm(response ~ 1)
+
+# Create a vector to store the names of the predictors
+predictor.names <- names(predictors)
+
+# Create an empty data frame to store the AIC, R squared and adjusted R squared for each result
+result <- data.frame(AIC = numeric(), R_squared = numeric(), Adjusted_R_squared = numeric())
+
+# Loop over the predictors and add them one at a time based on the improvement in the model's goodness of fit
+for (i in 1:length(predictor.names)) {
+  # Construct the updated formula
+  new.formula <- paste(predictor.names[1:i], collapse = ".")
+  new.formula <- paste(new.formula, predictor.names[i], sep = ".")
+  # Update the model formula
+  model.formula <- update(formula(model), new.formula)
+  # Fit the model with the updated formula
+  model <- lm(model.formula, data = data)
+  # Store the AIC, R-squared, and adjusted R-squared values
+  result[i, ] <- c(AIC(model), summary(model)$r.squared, summary(model)$adj.r.squared)
+}
+
+  
+  # Check if the current model is an improvement over the previous model
+  if (current.aic < AIC(model)) {
+    # Update the model and store the AIC, R squared and adjusted R squared
+    model <- current.fit
+    result <- rbind(result, data.frame(AIC = current.aic, R_squared = current.rsq, Adjusted_R_squared = current.adjr))
+  }
+
+
+# Print the final model and the result data frame
+print(model)
+print(result)
+
+```
+
+
+```{r}
+# create an empty vector to store selected variables
+selected_vars <- c()
+
+# create a loop for stepwise forward regression
+while (TRUE) {
+  # fit a linear model with the selected variables so far
+  if (length(selected_vars) == 0) {
+    model <- lm("GPP_NT_VUT_REF" ~ 1)
+  } else {
+    formula <- as.formula(paste("GPP_NT_VUT_REF ~" , paste(selected_vars, collapse = " + ")))
+    model <- lm(formula, data = half_hourly_fluxes_new_order("siteid","TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F", "VPD_F", "PA_F", "P_F", "WS_F", "TA_F_MDS", "SW_IN_F_MDS", "LW_IN_F_MDS", "VPD_F_MDS", "CO2_F_MDS", "PPFD_IN", "USTAR"))
+  }
+  
+  # get the AIC for the current model
+  current_aic <- AIC(model)
+  
+  # get the AIC for each candidate variable
+  candidate_aic <- c()
+  for (var in c("siteid","TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F", "VPD_F", "PA_F", "P_F", "WS_F", "TA_F_MDS", "SW_IN_F_MDS", "LW_IN_F_MDS", "VPD_F_MDS", "CO2_F_MDS", "PPFD_IN", "USTAR")) {
+    if (var %in% selected_vars) {
+      candidate_aic <- c(candidate_aic, Inf)
+    } else {
+      formula <- as.formula(paste("y ~ ", paste(c(selected_vars, var), collapse = " + ")))
+      candidate_model <- lm(formula, data = half_hourly_fluxes_new_order("GPP_NT_VUT_REF", "siteid","TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F", "VPD_F", "PA_F", "P_F", "WS_F", "TA_F_MDS", "SW_IN_F_MDS", "LW_IN_F_MDS", "VPD_F_MDS", "CO2_F_MDS", "PPFD_IN", "USTAR"))
+      candidate_aic <- c(candidate_aic, AIC(candidate_model))
+    }
+  }
+  
+  # select the variable that improves the model the most
+  if (min(candidate_aic) < current_aic) {
+    selected_vars <- c(selected_vars, names(candidate_aic)[which.min(candidate_aic)])
+  } else {
+    break
+  }
+}
+
+# print the selected variables
+selected_vars
+
+```
+
+
+
+
+
+

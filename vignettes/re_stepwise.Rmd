@@ -22,11 +22,17 @@ half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") 
 visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
 
+
+
 We can see that some columns do have a lot of missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model
 
 ```{r results='hide'}
 summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) per row
 ```
+
+
+
+
 
 ### Task 1 - Evaluation of all the bivariate models
 
@@ -153,6 +159,16 @@ model_op1 <- stats::step(FitStart_1, direction = "forward", scope = formula(FitA
 stats::formula(model_op1) #checking for the final formula
 ```
 
+```{r}
+summary(model_op1)
+```
+
+```{r}
+library(tidyverse)
+library(psych)
+
+pairs.panels(half_hourly_fluxes_op1[,c("PPFD_IN", "siteid", "LW_IN_F", "VPD_F_MDS", "TA_F_MDS","SW_IN_F", "WS_F", "USTAR",  "VPD_F", "CO2_F_MDS", "PA_F", "TIMESTAMP", "P_F")], method= "spearman", lm=TRUE)
+```
 
 ### Task 2 - Option 2 - Imputing with the mice function
 
@@ -161,11 +177,11 @@ stats::formula(model_op1) #checking for the final formula
 mice::md.pattern(half_hourly_fluxes) #checking the pattern of the missing data
 ```
 
-```{r warning=FALSE}
+```{r warning=FALSE, eval=FALSE}
 imp_data <- mice::mice(half_hourly_fluxes, m = 57 , maxit = 15, seed = 12345, print = FALSE) #setting the mice options
 ```
 
-```{r results='hide'}
+```{r results='hide}
 imp_data #checking the used methods
 ```
 
@@ -207,7 +223,7 @@ model_task_1_r2 #r squared of model task 1
 ```
 
 ```{r}
-model_op1_r2 <- summary(model_op1)$r.squared  
+model_op1_r2 <- summary(model_op1)$r.squared 
 model_op1_r2 #r squared of model option 1
 ```
 
@@ -223,6 +239,7 @@ stats::extractAIC(model_task_1) #AIC bivariate model task 1
 ```{r}
 stats::extractAIC(model_op1) #AIC model option 1
 ```
+
 ```{r error=TRUE}
 stats::extractAIC(model_op2) #AIC model option 2 - how do i get that?
 ```

@@ -1,0 +1,69 @@
+---
+title: "Vorlesungsnotiz"
+author: "Noah Suter"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# Vorlesungsnotizen Kapitel 8
+```{r}
+# load necessary packages
+library(ggplot2)
+```
+
+## load data
+
+```{r}
+?CO2
+CO2 #afterwards trying to predict the uptake
+```
+
+```{r}
+ggplot(data = CO2) + 
+         geom_point(aes(
+           x= conc, 
+           y= uptake,
+           color = Treatment,
+           shape = Type
+         )) + 
+         labs(x = "concentration", y = "CO2 uptake") 
+```
+
+# Exploratory data analysis
+Take a look at the structure of the data types of variables, ranges, etc.
+Visualize relationships between variables, with the modelling task in mind
+```{r}
+summary(CO2)
+```
+
+## First simple model: Linear regression
+Task: Regress CO2 Uptake on amblent CO2 concentration
+```{r}
+mod_linear <- lm(uptake ~ conc, data = CO2)
+summary(mod_linear)
+# R squared should be as close to 1 as possible, means the model performs good if higher
+```
+how does the linear regression fit the data?
+```{r}
+plot(mod_linear, 1) # as close to the horizontal line as possible would be best
+plot(mod_linear, 2) # qq-plot
+plot(mod_linear, 5) # looking at outliers
+```
+## Improve model fit
+
+```{r}
+curve(log) # better for this data
+mod_log <- lm(uptake ~log(conc), data = CO2)
+summary(mod_log)
+```
+
+# include categorail covariates
+
+```{r}
+mod_cat <- lm(uptake ~log(conc) + Treatment, data = CO2)
+summary(mod_cat)
+```
+
+```{r}
+#adjusted r squared is better. Therefore a better adjusted r squared is best (it is more generalizable in the end)
+```
+
