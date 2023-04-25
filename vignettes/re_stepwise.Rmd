@@ -23,7 +23,7 @@ half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") 
 visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
 
-We can see that some columns do have a lot of missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model
+We can see that some columns do have a lot of missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model. For creating a model i chose to delete the rows containing missin values.
 
 
 ```{r results='hide'}
@@ -73,22 +73,25 @@ for (predictor in c("none", "siteid", "TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F",
 }
 
 # Convert the list of results into a data frame
-results_df <- as.data.frame(do.call(rbind, results))
+results_bivariate <- as.data.frame(do.call(rbind, results))
 
 # Rename the columns
-colnames(results_df) <- c("formula", "AIC", "r_squared", "adj_r_squared")
+colnames(results_bivariate) <- c("formula", "AIC", "r_squared", "adj_r_squared")
 
 # Convert AIC to numeric
-results_df$AIC <- as.numeric(results_df$AIC)
+results_bivariate$AIC <- as.numeric(results_bivariate$AIC)
 
 # Sort the data frame by AIC value in ascending order
-results_df <- results_df[order(results_df$AIC), ]
+results_bivariate <- results_bivariate[order(results_bivariate$AIC), ]
 
 # Print the results
-print(results_df)
+results_bivariate[1:10,]
 
 ```
 
+One can see the bivariate models already sorted after the value AIC. The sorting is descending from the lowest to the highest AIC. As the lowest AIC is the best, this predictor should be used. In this case it would be PPFD_IN. In the case that the option <none> would be better than all the predictors, the model would be better without any predictors. But that is not the case here. One can see that the R squared as well as the adjusted R squared is decreasing if higher up. That makes sense as the model is better if there is a higher R squared. The higher the adjusted R squared, the higher the Generalizability. Therefore it makes sense that the best model (highest AIC) has the highest adjusted R squared as well. And the highest R squared. For the stepwise forward regression, the model should continue with PPFD_IN set as the first predictor.
+
+## Plot of the best bivariate model
 ```{r warning=FALSE, message=FALSE}
 library(ggplot2)
 
@@ -99,8 +102,9 @@ ggplot(half_hourly_fluxes_clean, aes(x = PPFD_IN , y = GPP_NT_VUT_REF)) +
        title = "Regression between GGP and PPFD") #plotting the result of the regression with one predictor
 ```
 
-## Full stepwise forward regression with a loop
+One can suspect a linear correlation between these two values. But is is not possible to state anything about the dependence of these two values as they could have a correlation per coincidence. At the same time one can see that the GPP_NT_VUT_REF values are not described perfectly by just using a linear regression model with the only predictor being PPFD_IN. Therefore it makes sense to continue with a stepwise approach to try to reach a better model.
 
+## Full stepwise forward regression with a loop
 
 ```{r}
 # Define the response variable
@@ -174,8 +178,6 @@ for (i in seq_along(models)) {
 library(dplyr)
 library(base)
 
-# Example dataframe
-
 # Group by Formula and summarize by concatenating the values
 dataframe_model_values <- model_stats %>%
   group_by(Model) %>%
@@ -193,9 +195,15 @@ dataframe_model_values <- dataframe_model_values[order(dataframe_model_values$AI
 cat("Best model based on AIC:\n")
 print(dataframe_model_values[1, ])
 ```
+The choice of the model makes sense as the lowest AIC is being chosen. AS a lower AIC means that the model is better, the result makes sense. It as well makes sense that it stopped after the predictor P_F. Because the model had better AIC values (lower AIC) if no more predictors were added. The adjusted R squared got better as well which means that it got higher. The R squared is not the highest within the last model but that makes sense at the r squared is not the most important value to determine which model is the best (AIC is better)
+```{r warning=FALSE}
+library(tidyverse)
+library(psych)
 
+pairs.panels(half_hourly_fluxes_clean[,c("PPFD_IN", "siteid", "LW_IN_F", "VPD_F_MDS", "TA_F_MDS","SW_IN_F", "WS_F", "USTAR",  "VPD_F", "CO2_F_MDS", "PA_F", "TIMESTAMP", "P_F")], method= "spearman", lm=TRUE)
+```
 
-## Full stepwise regression with the function step
+## Full stepwise regression with the function step (to onfirm the results of the loop)
 
 ```{r results='hide', message=FALSE}
 FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_clean)
@@ -209,17 +217,13 @@ stats::formula(FitAll) #printing the full formula
 ```
 
 ```{r error=TRUE, warning=FALSE, results='hide'}
-stats::step(FitStart, direction = "forward", scope = formula(FitAll)) # doing the stepwise forward regression
+model_step <- stats::step(FitStart, direction = "forward", scope = formula(FitAll)) # doing the stepwise forward regression
 ```
 
-```{r warning=FALSE}
-library(tidyverse)
-library(psych)
-
-pairs.panels(half_hourly_fluxes_clean[,c("PPFD_IN", "siteid", "LW_IN_F", "VPD_F_MDS", "TA_F_MDS","SW_IN_F", "WS_F", "USTAR",  "VPD_F", "CO2_F_MDS", "PA_F", "TIMESTAMP", "P_F")], method= "spearman", lm=TRUE)
+```{r}
+stats::formula(model_step)
 ```
-
-
+One can see that the result is the same as the result achieved by the loop before. This shows that the loop worked properly. 
 
 
 ## other optionsto handle the missing data - Imputing the data
