@@ -37,6 +37,14 @@ half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF
 ```{r}
 half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes_new_order)
 ```
+
+```{r}
+test_model <- lm(GPP_NT_VUT_REF ~ TIMESTAMP, data = half_hourly_fluxes_clean)
+plot(test_model, 1)
+```
+
+
+
 ## Stepwsise forward regression - bivariate models in a loop
 
 ```{r results='hide'}
@@ -87,11 +95,17 @@ print(results_df)
 
 ```
 
+```{r warning=FALSE, message=FALSE}
+library(ggplot2)
 
+ggplot(half_hourly_fluxes_clean, aes(x = PPFD_IN , y = GPP_NT_VUT_REF)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.5, col="red") +
+  labs(x = "PPFD_IN", y = "GPP_NT_VUT_REF",
+       title = "Regression between GGP and PPFD") #plotting the result of the regression with one predictor
+```
 
-
-
-##Full stepwise forward regression with a loop
+## Full stepwise forward regression with a loop
 
 
 ```{r}
@@ -189,4 +203,48 @@ print(dataframe_model_values[1, ])
 
 ## Full stepwise regression with the function step
 
+```{r results='hide', message=FALSE}
+FitStart <- lm(GPP_NT_VUT_REF ~ 1, data = half_hourly_fluxes_clean)
+FitStart #Start with an empty model (just intercept)
+```
+
+```{r results='hide', message=FALSE}
+FitAll <- lm(GPP_NT_VUT_REF ~ ., data = half_hourly_fluxes_clean)
+FitAll # creating a model with all the predictors
+stats::formula(FitAll) #printing the full formula
+```
+
+```{r error=TRUE, warning=FALSE, results='hide'}
+stats::step(FitStart, direction = "forward", scope = formula(FitAll)) # doing the stepwise forward regression
+```
+
+```{r warning=FALSE}
+library(tidyverse)
+library(psych)
+
+pairs.panels(half_hourly_fluxes_clean[,c("PPFD_IN", "siteid", "LW_IN_F", "VPD_F_MDS", "TA_F_MDS","SW_IN_F", "WS_F", "USTAR",  "VPD_F", "CO2_F_MDS", "PA_F", "TIMESTAMP", "P_F")], method= "spearman", lm=TRUE)
+```
+
+
+## other optionsto handle the missing data - Imputing the data
+
+As we deleted the missing values, we now have a impact on the quality of the data as almost 2/3 of the rows were deleted. Therefore on could try another option of handling missing data. Another option would be to Impute the data. There one possibility would be to impute the mean, but a better option is to work with mice and run a iterativ process that predicts what the missing values could be based on the values that are not missing. There we can pool the best result and then do a stepwise forward regression with this imputed data. I'm going to show one possibility but will not let the code evaluate as it could take some time to knit that way.$
+
+```{r results='hide', fig.keep='last'}
+mice::md.pattern(half_hourly_fluxes) #checking the pattern of the missing data
+```
+
+```{r warning=FALSE, eval=FALSE}
+imp_data <- mice::mice(half_hourly_fluxes, m = 57 , maxit = 15, seed = 12345, print = FALSE) #setting the mice options and run the mice function
+```
+
+```{r results='hide', eval=FALSE}
+imp_data #checking the used methods
+```
+
+
+```{r eval=FALSE}
+plot(imp_data) #checking if convergence was achieved
+```
+afterwards one could run the stepwise forward regression with the imputed data and then compare the outcome with the model based on the deleted missing values. Then one could check which model is better and makes more sense. But as the mice function would need too long to knit i won't to the stepwise forward regression.
 
