@@ -30,14 +30,6 @@ We can see that some columns do have a lot of missing values. It will be importa
 summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) per row
 ```
 
-## Stepwsise forward regression - bivariate models in a loop
-
-```{r}
-
-```
-
-
-##Full stepwise forward regression with a loop
 ```{r}
 half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving the column of the response variable (GPP) to position one
 ```
@@ -45,6 +37,61 @@ half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF
 ```{r}
 half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes_new_order)
 ```
+## Stepwsise forward regression - bivariate models in a loop
+
+```{r results='hide'}
+
+# Define the response variable
+response_var <- "GPP_NT_VUT_REF"
+
+# Define the list to store the results
+results <- list()
+
+# Loop through all predictor variables and build bivariate models
+for (predictor in c("none", "siteid", "TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F", "VPD_F", 
+                    "PA_F", "P_F", "WS_F", "TA_F_MDS", "SW_IN_F_MDS", "LW_IN_F_MDS",
+                    "VPD_F_MDS", "CO2_F_MDS", "PPFD_IN", "USTAR")) {
+  
+  if (predictor == "none") {
+    # Build the formula string with no predictors
+    formula_string <- paste0(response_var, " ~ 1")
+  } else {
+    # Build the formula string with the current predictor
+    formula_string <- paste0(response_var, " ~ ", predictor)
+  }
+  
+  # Create the formula object
+  formula <- as.formula(formula_string)
+  
+  # Fit the linear model
+  model <- lm(formula, data = half_hourly_fluxes_clean)
+  
+  # Store the model results in the list
+  results[[predictor]] <- c(formula_string, AIC(model), summary(model)$r.squared, summary(model)$adj.r.squared)
+}
+
+# Convert the list of results into a data frame
+results_df <- as.data.frame(do.call(rbind, results))
+
+# Rename the columns
+colnames(results_df) <- c("formula", "AIC", "r_squared", "adj_r_squared")
+
+# Convert AIC to numeric
+results_df$AIC <- as.numeric(results_df$AIC)
+
+# Sort the data frame by AIC value in ascending order
+results_df <- results_df[order(results_df$AIC), ]
+
+# Print the results
+print(results_df)
+
+```
+
+
+
+
+
+##Full stepwise forward regression with a loop
 
 
 ```{r}
@@ -70,7 +117,7 @@ for (i in 1:ncol(half_hourly_fluxes_clean)) {
     candidate_formula <- as.formula(paste(response_var, "~", paste(c(selected_predictors, j), collapse = "+")))
     
     # Fit a linear model with the current predictor added
-    candidate_lm <- lm(candidate_formula, data = half_hourly_fluxes_op1)
+    candidate_lm <- lm(candidate_formula, data = half_hourly_fluxes_clean)
     
     # Check if the AIC is lower than the current lowest AIC
     if (AIC(candidate_lm) < lowest_aic) {
@@ -139,9 +186,7 @@ cat("Best model based on AIC:\n")
 print(dataframe_model_values[1, ])
 ```
 
-```{r}
-print(model_stats[1,])
-```
+
 ## Full stepwise regression with the function step
 
 
