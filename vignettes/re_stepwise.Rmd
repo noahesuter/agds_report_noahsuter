@@ -38,12 +38,6 @@ half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF
 half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes_new_order)
 ```
 
-```{r}
-test_model <- lm(GPP_NT_VUT_REF ~ TIMESTAMP, data = half_hourly_fluxes_clean)
-plot(test_model, 1)
-```
-
-
 
 ## Stepwsise forward regression - bivariate models in a loop
 
@@ -224,6 +218,8 @@ library(psych)
 
 pairs.panels(half_hourly_fluxes_clean[,c("PPFD_IN", "siteid", "LW_IN_F", "VPD_F_MDS", "TA_F_MDS","SW_IN_F", "WS_F", "USTAR",  "VPD_F", "CO2_F_MDS", "PA_F", "TIMESTAMP", "P_F")], method= "spearman", lm=TRUE)
 ```
+
+
 
 
 ## other optionsto handle the missing data - Imputing the data
