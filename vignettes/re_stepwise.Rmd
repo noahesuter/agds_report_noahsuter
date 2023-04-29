@@ -23,7 +23,7 @@ half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") 
 visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 ```
 
-We can see that some columns do have a lot of missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model. For creating a model i chose to delete the rows containing missin values.
+We can see that quite a few rows contain missing values. It will be important to keep that in mind for the interpretation of the results and for the creation of the model. For creating a model I chose to handle the missing data by deleting the rows containing missing values.
 
 
 ```{r results='hide'}
@@ -43,53 +43,53 @@ half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes_new_order)
 
 ```{r results='hide'}
 
-# Define the response variable
+# Defining the response variable
 response_var <- "GPP_NT_VUT_REF"
 
-# Define the list to store the results
+# Creating a list to store the results
 results <- list()
 
-# Loop through all predictor variables and build bivariate models
+# Loop through all predictor variables to build all the bivariate models
 for (predictor in c("none", "siteid", "TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F", "VPD_F", 
                     "PA_F", "P_F", "WS_F", "TA_F_MDS", "SW_IN_F_MDS", "LW_IN_F_MDS",
                     "VPD_F_MDS", "CO2_F_MDS", "PPFD_IN", "USTAR")) {
   
   if (predictor == "none") {
-    # Build the formula string with no predictors
+    # Building a empty model with just the intercepte
     formula_string <- paste0(response_var, " ~ 1")
   } else {
-    # Build the formula string with the current predictor
+    # Building the model with the corresponsding predictor
     formula_string <- paste0(response_var, " ~ ", predictor)
   }
   
-  # Create the formula object
+  # Creating the formula object
   formula <- as.formula(formula_string)
   
   # Fit the linear model
   model <- lm(formula, data = half_hourly_fluxes_clean)
   
-  # Store the model results in the list
+  # Store the results of the model in the list
   results[[predictor]] <- c(formula_string, AIC(model), summary(model)$r.squared, summary(model)$adj.r.squared)
 }
 
-# Convert the list of results into a data frame
+# Converting the list of results into a data frame
 results_bivariate <- as.data.frame(do.call(rbind, results))
 
-# Rename the columns
+# Renaming the columns
 colnames(results_bivariate) <- c("formula", "AIC", "r_squared", "adj_r_squared")
 
-# Convert AIC to numeric
+# Converting the AIC to be numeric
 results_bivariate$AIC <- as.numeric(results_bivariate$AIC)
 
 # Sort the data frame by AIC value in ascending order
 results_bivariate <- results_bivariate[order(results_bivariate$AIC), ]
 
-# Print the results
+# Print the results (of the 10 best models)
 results_bivariate[1:10,]
 
 ```
 
-One can see the bivariate models already sorted after the value AIC. The sorting is descending from the lowest to the highest AIC. As the lowest AIC is the best, this predictor should be used. In this case it would be PPFD_IN. In the case that the option <none> would be better than all the predictors, the model would be better without any predictors. But that is not the case here. One can see that the R squared as well as the adjusted R squared is decreasing if higher up. That makes sense as the model is better if there is a higher R squared. The higher the adjusted R squared, the higher the Generalizability. Therefore it makes sense that the best model (highest AIC) has the highest adjusted R squared as well. And the highest R squared. For the stepwise forward regression, the model should continue with PPFD_IN set as the first predictor.
+Here we get the bivariate models already sorted ascending by the AIC. Therefore the best bivariate model is to find on top. As the lowest AIC is the best, this predictor should be used. In this case it would be PPFD_IN. As <none> is not the best option, it makes sense to continue to improve the model by doing a stepwise forward regression. Additionally, One can see that the R squared as well as the adjusted R squared is increasing if higher up (=better AIC). That makes sense as the model is better for this data if there is a higher R squared. The higher the adjusted R squared, the higher the Generalizability. Therefore it makes sense that the best model (highest AIC) has the highest adjusted R squared as well. It would be possible that the best model does not have the highest R squared, but in this case the highest R squared correlates with the lowest AIC. (It would make sense as the r squared just looks at the best model for this data but not for new data)
 
 ## Plot of the best bivariate model
 ```{r warning=FALSE, message=FALSE}
@@ -102,33 +102,33 @@ ggplot(half_hourly_fluxes_clean, aes(x = PPFD_IN , y = GPP_NT_VUT_REF)) +
        title = "Regression between GGP and PPFD") #plotting the result of the regression with one predictor
 ```
 
-One can suspect a linear correlation between these two values. But is is not possible to state anything about the dependence of these two values as they could have a correlation per coincidence. At the same time one can see that the GPP_NT_VUT_REF values are not described perfectly by just using a linear regression model with the only predictor being PPFD_IN. Therefore it makes sense to continue with a stepwise approach to try to reach a better model.
+One can suspect a linear correlation between these two values. But is is not possible to state anything about the dependence of these two values as they could have a correlation per coincidence. At the same time one can see that the GPP_NT_VUT_REF values are not described perfectly by just using a linear regression model with the only predictor being PPFD_IN. Therefore it makes sense to continue with a stepwise approach to try to improve the model.
 
 ## Full stepwise forward regression with a loop
 
 ```{r}
-# Define the response variable
+# Defining the response variable
 response_var <- "GPP_NT_VUT_REF"
-# Initialize a vector to store the selected predictors
+# Creating a vector to store the selected predictors
 selected_predictors <- c()
-# Initialize a list to store the intermediate models
+# Creating a list to store the models
 models <- list()
 # Loop through the predictors
 for (i in 1:ncol(half_hourly_fluxes_clean)) {
   
-  # Initialize a variable to store the best predictor
+  # Creating a variable to store the best predictor
   best_predictor <- NULL
   
-  # Initialize a variable to store the lowest AIC
+  # Creating a variable to store the lowest AIC
   lowest_aic <- Inf
   
   # Loop through the remaining predictors
   for (j in setdiff(names(half_hourly_fluxes_clean)[-1], selected_predictors)) {
     
-    # Create a formula object for the current predictor
+    # Create a model for the current predictor
     candidate_formula <- as.formula(paste(response_var, "~", paste(c(selected_predictors, j), collapse = "+")))
     
-    # Fit a linear model with the current predictor added
+    # Fit a linear model and adding the current predictor
     candidate_lm <- lm(candidate_formula, data = half_hourly_fluxes_clean)
     
     # Check if the AIC is lower than the current lowest AIC
@@ -137,7 +137,7 @@ for (i in 1:ncol(half_hourly_fluxes_clean)) {
       lowest_aic <- AIC(candidate_lm)
     }
     
-    # Store the intermediate model
+    # Store the model
     models[[paste(c(selected_predictors, j), collapse = "+")]] <- candidate_lm
   }
   
@@ -146,20 +146,20 @@ for (i in 1:ncol(half_hourly_fluxes_clean)) {
   
   
 }
-# Initialize a data frame to store the model statistics
+# creating a data frame to store the model statistics
 model_stats <- data.frame(Model = character(),
                            AIC = numeric(),
                            Adj_R2 = numeric(),
                            R2 = numeric(),
                            stringsAsFactors = FALSE)
-# Loop through the intermediate models and extract the statistics
+# Loop through the models and extract the statistics
 for (i in seq_along(models)) {
   
-  # Extract the model formula and AIC
+  # Extract the formula of the model and the AIC
   model_formula <- formula(models[[i]])
   model_aic <- AIC(models[[i]])
   
-  # Extract the model summary and extract the R-squared and adjusted R-squared
+  # Extracting the summary of the model and extracting the R-squared and adjusted R-squared
   model_summary <- summary(models[[i]])
   model_adj_r2 <- summary(models[[i]])$adj.r.squared
   model_r2 <- summary(models[[i]])$r.squared
@@ -178,7 +178,7 @@ for (i in seq_along(models)) {
 library(dplyr)
 library(base)
 
-# Group by Formula and summarize by concatenating the values
+# Group by Formula and summarize 
 dataframe_model_values <- model_stats %>%
   group_by(Model) %>%
   summarize(Predictors = paste(Model, collapse = " "),
@@ -191,11 +191,11 @@ dataframe_model_values[1] <- NULL
 ```{r}
 # Sort the model statistics data frame by ascending AIC values
 dataframe_model_values <- dataframe_model_values[order(dataframe_model_values$AIC), ]
-# Print the top row of the model statistics data frame
+# Print the top row of the model statistics data frame to extract the best model
 cat("Best model based on AIC:\n")
 print(dataframe_model_values[1, ])
 ```
-The choice of the model makes sense as the lowest AIC is being chosen. AS a lower AIC means that the model is better, the result makes sense. It as well makes sense that it stopped after the predictor P_F. Because the model had better AIC values (lower AIC) if no more predictors were added. The adjusted R squared got better as well which means that it got higher. The R squared is not the highest within the last model but that makes sense at the r squared is not the most important value to determine which model is the best (AIC is better)
+The choice of the model makes sense as the lowest AIC is being chosen (the model with the lowest AIC is the best model). It as well makes sense that it stopped after the predictor P_F. Because the model had better AIC values (lower AIC) if no more predictors were added. Additionaly one can see that the highest r squared cannot be found within the best model. This is the case as the r squared just states the best model for this exact data. the adjusted R squared contains the model that has the best generalizabiliy and therfore can be used for new data as well (with the same response variable and predictors. In the end the step function extracts the model with the lowest AIC and the best model is chosen by this value. Therefore the AIC value determines the best model in the end.
 ```{r warning=FALSE}
 library(tidyverse)
 library(psych)
