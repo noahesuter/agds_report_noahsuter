@@ -1,0 +1,84 @@
+---
+title: "re_ml_01"
+author: "Noah Suter"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# AGDS Report
+
+## Report Exercise 5
+
+### Preparing the data
+
+```{r results='hide'}
+list.files('../data') #listing the files to find the right data
+```
+
+
+```{r results='hide', message=FALSE}
+half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv") # reading the data into R
+```
+
+
+```{r}
+visdat::vis_miss(half_hourly_fluxes) #checking for missing values
+```
+
+```{r results='hide'}
+summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) per row
+```
+
+```{r}
+half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes)
+```
+
+
+```{r}
+library(ggplot2)
+# Data cleaning: looks ok, no obviously bad data
+# no long tail, therefore no further target engineering
+half_hourly_fluxes_clean |> 
+  ggplot(aes(x = GPP_NT_VUT_REF, y = ..count..)) + 
+  geom_histogram()
+```
+
+```{r}
+library(rsample)
+library(recipes)
+library(caret)
+library(tidyr)
+
+# Data splitting
+set.seed(1982)  # for reproducibility
+split <- rsample::initial_split(half_hourly_fluxes_clean, prop = 0.7, strata = "VPD_F")
+daily_fluxes_train <- rsample::training(split)
+daily_fluxes_test <- rsample::testing(split)
+
+# Model and pre-processing formulation, use all variables but LW_IN_F
+pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F, 
+                      data = daily_fluxes_train |> drop_na()) |> 
+  recipes::step_BoxCox(all_predictors()) |> 
+  recipes::step_center(all_numeric(), -all_outcomes()) |>
+  recipes::step_scale(all_numeric(), -all_outcomes())
+
+# Fit linear regression model
+mod_lm <- caret::train(
+  pp, 
+  data = daily_fluxes_train |> drop_na(),
+  method = "lm",
+  trControl = caret::trainControl(method = "none"),
+  metric = "RMSE"
+)
+
+# Fit KNN model
+mod_knn <- caret::train(
+  pp, 
+  data = daily_fluxes_train |> drop_na(), 
+  method = "knn",
+  trControl = caret::trainControl(method = "none"),
+  tuneGrid = data.frame(k = 8),
+  metric = "RMSE"
+)
+```
+
+
