@@ -2,7 +2,10 @@
 title: "re_ml_01"
 author: "Noah Suter"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: yes
 ---
 # AGDS Report
 
@@ -33,16 +36,18 @@ half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes)
 ```
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(ggplot2)
-# Data cleaning: looks ok, no obviously bad data
-# no long tail, therefore no further target engineering
+# Data cleaning: no obvious bad data noticable
+# as there is no long tail, no further target engineering
 half_hourly_fluxes_clean |> 
   ggplot(aes(x = GPP_NT_VUT_REF, y = ..count..)) + 
   geom_histogram()
 ```
 
-```{r}
+## Task 1 - Comparison of the linear regression and KNN models
+### Implementation of the given code
+```{r warning=FALSE, message=FALSE}
 library(rsample)
 library(recipes)
 library(caret)
@@ -51,12 +56,12 @@ library(tidyr)
 # Data splitting
 set.seed(1982)  # for reproducibility
 split <- rsample::initial_split(half_hourly_fluxes_clean, prop = 0.7, strata = "VPD_F")
-daily_fluxes_train <- rsample::training(split)
-daily_fluxes_test <- rsample::testing(split)
+half_hourly_fluxes_train <- rsample::training(split)
+half_hourly_fluxes_test <- rsample::testing(split)
 
 # Model and pre-processing formulation, use all variables but LW_IN_F
 pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F, 
-                      data = daily_fluxes_train |> drop_na()) |> 
+                      data = half_hourly_fluxes_train |> drop_na()) |> 
   recipes::step_BoxCox(all_predictors()) |> 
   recipes::step_center(all_numeric(), -all_outcomes()) |>
   recipes::step_scale(all_numeric(), -all_outcomes())
@@ -64,7 +69,7 @@ pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F,
 # Fit linear regression model
 mod_lm <- caret::train(
   pp, 
-  data = daily_fluxes_train |> drop_na(),
+  data = half_hourly_fluxes_train |> drop_na(),
   method = "lm",
   trControl = caret::trainControl(method = "none"),
   metric = "RMSE"
@@ -73,12 +78,109 @@ mod_lm <- caret::train(
 # Fit KNN model
 mod_knn <- caret::train(
   pp, 
-  data = daily_fluxes_train |> drop_na(), 
+  data = half_hourly_fluxes_train|> drop_na(), 
   method = "knn",
   trControl = caret::trainControl(method = "none"),
   tuneGrid = data.frame(k = 8),
   metric = "RMSE"
 )
+```
+
+
+
+```{r}
+source("../functions/large_files_ex_5.R") #loading all the large code chunks form another .R file
+```
+
+```{r warning=FALSE, message=FALSE}
+eval_model(mod = mod_lm, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test)
+```
+```{r warning=FALSE, message=FALSE}
+# KNN model
+eval_model(mod = mod_knn, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test)
+```
+###Interpretation
+
+### Visualisation of the temporal variations of observed and modelled GPP for both models
+
+```{r}
+library(ggplot2)
+# create a dataframe with the dates and observed GPP
+observed <- data.frame(Date = half_hourly_fluxes_clean$TIMESTAMP, GPP = half_hourly_fluxes_clean$GPP_NT_VUT_REF)
+# add columns with modelled GPP for linear regression and KNN
+observed$lm <- predict(mod_lm, newdata = half_hourly_fluxes_clean)
+observed$knn <- predict(mod_knn, newdata = half_hourly_fluxes_clean)
+# create a line plot for observed and modelled GPP for linear regression
+ggplot(observed, aes(x = Date)) +
+  geom_line(aes(y = GPP, color = "Observed")) +
+  geom_line(aes(y = lm, color = "Linear Regression")) +
+  labs(x = "Date", y = "GPP", color = "Model") +
+  scale_color_manual(values=c("green", "blue")) +
+  ggtitle("Observed and Modelled GPP for Linear Regression")
+# create a line plot for observed and modelled GPP for KNN
+ggplot(observed, aes(x = Date)) +
+  geom_line(aes(y = GPP, color = "Observed")) +
+  geom_line(aes(y = knn, color = "KNN",)) +
+  labs(x = "Date", y = "GPP", color = "Model") +
+  scale_color_manual(values=c("green", "blue")) +
+  ggtitle("Observed and Modelled GPP for KNN")
+
+```
+
+
+## Task 2 - The role of k
+
+### Hypothesis
+
+if k is going towards 1, the models becomes more complex and flexible. This can be explained by the fact, that the prediction for a new data point is based on the closest neighbor. In terms of overfitting this can turn into a problem.if we then guess the development for R squared we can expect R squared to get bigger if closer to one for the training set. At the same time the problem of overfitting is that the model is getting less generalizability. Therefore it can be expected that the r squared for the test set is decreasing if closer to one.
+The MAE is getting lower in the overfitted data. Therefore in the training set one can expect a lower MAE if closer to one (as it is more overfitted if closer to one). Yet the same problem with the generalizability accurs doe to the overfitting. Therefore the MAE would get bigger for the test set if closer to one.
+
+In the direction of k = N the problem of underfitting can accur. Therefore the values will develop the other way around for higher k.
+
+In general a bias-variance trade-off is happening. if k is small, the model has low bias but high variance. If k is large the model has high bias but low variance. For a good solutions a compromise needs to be found.
+
+### Hypothesis put to test with a code
+
+```{r}
+# Evaluate KNN model for different values of k
+k_values <- c(1:30)
+mae_values <- sapply(k_values, function(k) get_mae(k)$mae_test)
+mae_train_values <- sapply(k_values, function(k) get_mae(k)$mae_train)
+```
+
+```{r}
+# Visualize MAE as a function of k
+df <- data.frame(k = k_values, MAE_test = mae_values, MAE_train = mae_train_values)
+ggplot(df, aes(x = k)) + 
+  geom_line(aes(y = MAE_test, color = "Test")) + 
+  geom_line(aes(y = MAE_train, color = "Train")) +
+  geom_point(aes(y = MAE_test)) + 
+  geom_point(aes(y = MAE_train)) + 
+  xlab("k") + 
+  ylab("MAE") +
+  scale_color_manual(name = "Data set", values = c("red", "blue"))
+```
+
+
+
+
+```{r warning=FALSE}
+get_mae(k=15)
+```
+
+
+
+### Code for trying to find an optimal k
+
+```{r}
+# Determine optimal k value
+optimal_k <- k_values[which.min(mae_values)]
+
+# Print results
+cat("Optimal k value for generalizability:", optimal_k, "\n")
+cat("MAE on test set for optimal k value:", mae_values[which.min(mae_values)], "\n")
+cat("MAE on training set for optimal k value:", mae_train_values[which.min(mae_values)], "\n")
+
 ```
 
 
