@@ -26,6 +26,59 @@ FLX_Lae <- readr::read_csv("../data/FLX_CH-Lae_FLUXNET2015_FULLSET_DD_2004-2014_
 FLX_Dav <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-2014_1-3.csv") # reading the data for Dav into R
 ```
 
+### Cleaning the data
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(base)
+library(recipes)
+daily_fluxes <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-2014_1-3.csv") |>  
+  
+  # select only the variables we are interested in
+  dplyr::select(TIMESTAMP,
+                GPP_NT_VUT_REF,    # the target
+                ends_with("_QC"),  # quality control info
+                ends_with("_F"),   # includes all all meteorological covariates
+                -contains("JSB")   # weird useless variable
+                ) |>
+
+  # convert to a nice date object
+  dplyr::mutate(TIMESTAMP = ymd(TIMESTAMP)) |>
+
+  # set all -9999 to NA
+  dplyr::na_if(-9999) |> # NOTE: Newer tidyverse version no longer support this statement
+                         # instead, use `mutate(across(where(is.numeric), ~na_if(., -9999))) |> ` 
+  
+  # retain only data based on >=80% good-quality measurements
+  # overwrite bad data with NA (not dropping rows)
+  dplyr::mutate(GPP_NT_VUT_REF = ifelse(NEE_VUT_REF_QC < 0.8, NA, GPP_NT_VUT_REF),
+                TA_F           = ifelse(TA_F_QC        < 0.8, NA, TA_F),
+                SW_IN_F        = ifelse(SW_IN_F_QC     < 0.8, NA, SW_IN_F),
+                LW_IN_F        = ifelse(LW_IN_F_QC     < 0.8, NA, LW_IN_F),
+                VPD_F          = ifelse(VPD_F_QC       < 0.8, NA, VPD_F),
+                PA_F           = ifelse(PA_F_QC        < 0.8, NA, PA_F),
+                P_F            = ifelse(P_F_QC         < 0.8, NA, P_F),
+                WS_F           = ifelse(WS_F_QC        < 0.8, NA, WS_F)) |> 
+
+  # drop QC variables (no longer needed)
+  dplyr::select(-ends_with("_QC"))
+
+# Data splitting
+set.seed(123)  # for reproducibility
+split <- rsample::initial_split(daily_fluxes, prop = 0.7, strata = "VPD_F")
+daily_fluxes_train <- rsample::training(split)
+daily_fluxes_test <- rsample::testing(split)
+
+# The same model formulation is in the previous chapter
+pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F, 
+                      data = daily_fluxes_train) |> 
+  recipes::step_center(all_numeric(), -all_outcomes()) |>
+  recipes::step_scale(all_numeric(), -all_outcomes())
+```
+
+
+
 ```{r}
 visdat::vis_miss(FLX_Dav, warn_large_data = FALSE) #checking for missing values in the Dav dataset
 ```
@@ -35,6 +88,9 @@ visdat::vis_miss(FLX_Lae, warn_large_data = FALSE) #checking for missing values 
 ```
 One can see that both of the datasets do not have missing values
 
+```{r}
+FLX_Dav$GPP_NT_VUT_REF
+```
 
 ### Splitting the data
 
@@ -54,49 +110,15 @@ FLX_Lae_train<- rsample::training(split)
 FLX_Lae_test <- rsample::testing(split)
 ```
 
-```{r}
-source("../functions/large_files_ex_6.R")
-```
 
-### Comparison within Site 
+### Testing
+
+```{r}
+pp <- recipes
+```
 
 ```{r}
 library(caret)
-library(tidyr)
-set.seed(1982)
-train_DAV <- caret::train(pp, 
-                       data = FLX_Dav_train |> drop_na(), 
-                       method = "knn",
-                       trControl = caret::trainControl(method = "cv", number = 10),
-                       tuneGrid = data.frame(k = c(2, 5, 10, 15, 20, 25, 30, 35, 40, 60, 100)),
-                       metric = "MAE")
+trc = trainControl(metho)
 ```
-
-```{r}
-get_mae_within(train = FLX_Lae_train, test = FLX_Lae_test, k=10)
-```
-
-```{r}
-get_mae_within(train = FLX_Dav_train, test = FLX_Dav_test, k=10)
-```
-### Comparison across-site
-
-```{r}
-get_mae_across(train = FLX_Dav_train,test =  FLX_Dav_test, k = 10)
-```
-
-
-```{r}
-# Load the function with FLX_Dav_train and FLX_Dav_test
-set.seed(1982)
-split_Dav <- rsample::initial_split(FLX_Dav, prop = 0.8)
-FLX_Dav_train <- rsample::training(split_Dav)
-FLX_Dav_test <- rsample::testing(split_Dav)
-
-get_mae_across_1(FLX_Lae_train, FLX_Dav_test, 10)
-```
-
-
-
-
 
