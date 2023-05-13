@@ -1,0 +1,102 @@
+---
+title: "re_ml_02"
+author: "Noah Suter"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: yes
+---
+
+# AGDS Report
+
+## Report Exercise 6
+
+### Loading the data
+
+```{r results='hide'}
+list.files('../data') #listing the files to find the right data
+```
+
+```{r results='hide', message=FALSE}
+FLX_Lae <- readr::read_csv("../data/FLX_CH-Lae_FLUXNET2015_FULLSET_DD_2004-2014_1-4.csv") # reading the data for Lae into R
+```
+
+```{r results='hide', message=FALSE}
+FLX_Dav <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-2014_1-3.csv") # reading the data for Dav into R
+```
+
+```{r}
+visdat::vis_miss(FLX_Dav, warn_large_data = FALSE) #checking for missing values in the Dav dataset
+```
+
+```{r}
+visdat::vis_miss(FLX_Lae, warn_large_data = FALSE) #checking for missing values in the Dav dataset
+```
+One can see that both of the datasets do not have missing values
+
+
+### Splitting the data
+
+```{r}
+# Data splitting for Dav with a 80/20 split
+set.seed(1982)  # made for reproducibility
+split <- rsample::initial_split(FLX_Dav, prop = 0.8)
+FLX_Dav_train<- rsample::training(split)
+FLX_Dav_test <- rsample::testing(split)
+```
+
+```{r}
+# Data splitting for Lae with a 80/20 split
+set.seed(1982)  # made for reproducibility
+split <- rsample::initial_split(FLX_Lae, prop = 0.8)
+FLX_Lae_train<- rsample::training(split)
+FLX_Lae_test <- rsample::testing(split)
+```
+
+```{r}
+source("../functions/large_files_ex_6.R")
+```
+
+### Comparison within Site 
+
+```{r}
+library(caret)
+library(tidyr)
+set.seed(1982)
+train_DAV <- caret::train(pp, 
+                       data = FLX_Dav_train |> drop_na(), 
+                       method = "knn",
+                       trControl = caret::trainControl(method = "cv", number = 10),
+                       tuneGrid = data.frame(k = c(2, 5, 10, 15, 20, 25, 30, 35, 40, 60, 100)),
+                       metric = "MAE")
+```
+
+```{r}
+get_mae_within(train = FLX_Lae_train, test = FLX_Lae_test, k=10)
+```
+
+```{r}
+get_mae_within(train = FLX_Dav_train, test = FLX_Dav_test, k=10)
+```
+### Comparison across-site
+
+```{r}
+get_mae_across(train = FLX_Dav_train,test =  FLX_Dav_test, k = 10)
+```
+
+
+```{r}
+# Load the function with FLX_Dav_train and FLX_Dav_test
+set.seed(1982)
+split_Dav <- rsample::initial_split(FLX_Dav, prop = 0.8)
+FLX_Dav_train <- rsample::training(split_Dav)
+FLX_Dav_test <- rsample::testing(split_Dav)
+
+get_mae_across_1(FLX_Lae_train, FLX_Dav_test, 10)
+```
+
+
+
+
+

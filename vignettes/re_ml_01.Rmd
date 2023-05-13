@@ -32,7 +32,7 @@ summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) 
 ```
 
 ```{r}
-half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes)
+half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes) #deleting all the rows with missing values
 ```
 
 
@@ -54,7 +54,7 @@ library(caret)
 library(tidyr)
 
 # Data splitting
-set.seed(1982)  # for reproducibility
+set.seed(1982)  # made for reproducibility
 split <- rsample::initial_split(half_hourly_fluxes_clean, prop = 0.7, strata = "VPD_F")
 half_hourly_fluxes_train <- rsample::training(split)
 half_hourly_fluxes_test <- rsample::testing(split)
@@ -93,11 +93,11 @@ source("../functions/large_files_ex_5.R") #loading all the large code chunks for
 ```
 
 ```{r warning=FALSE, message=FALSE}
-eval_model(mod = mod_lm, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test)
+eval_model(mod = mod_lm, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test) #running the lm model with test and train data
 ```
 ```{r warning=FALSE, message=FALSE}
 # KNN model
-eval_model(mod = mod_knn, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test)
+eval_model(mod = mod_knn, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test) #running the knn model with train and test data
 ```
 ###Interpretation
 
@@ -110,22 +110,24 @@ observed <- data.frame(Date = half_hourly_fluxes_clean$TIMESTAMP, GPP = half_hou
 # add columns with modelled GPP for linear regression and KNN
 observed$lm <- predict(mod_lm, newdata = half_hourly_fluxes_clean)
 observed$knn <- predict(mod_knn, newdata = half_hourly_fluxes_clean)
-# create a line plot for observed and modelled GPP for linear regression
+# create a line plot for observed and modelled GPP for linear regression models
 ggplot(observed, aes(x = Date)) +
   geom_line(aes(y = GPP, color = "Observed")) +
   geom_line(aes(y = lm, color = "Linear Regression")) +
   labs(x = "Date", y = "GPP", color = "Model") +
   scale_color_manual(values=c("green", "blue")) +
   ggtitle("Observed and Modelled GPP for Linear Regression")
-# create a line plot for observed and modelled GPP for KNN
+```
+```{r}
+# create a line plot for observed and modelled GPP for KNN models
 ggplot(observed, aes(x = Date)) +
   geom_line(aes(y = GPP, color = "Observed")) +
   geom_line(aes(y = knn, color = "KNN",)) +
   labs(x = "Date", y = "GPP", color = "Model") +
   scale_color_manual(values=c("green", "blue")) +
   ggtitle("Observed and Modelled GPP for KNN")
-
 ```
+
 
 
 ## Task 2 - The role of k
@@ -149,7 +151,7 @@ mae_train_values <- sapply(k_values, function(k) get_mae(k)$mae_train)
 ```
 
 ```{r}
-# Visualize MAE as a function of k
+# showing model generalisability (MAE - test) as a function of model complexity (number of k) 
 df <- data.frame(k = k_values, MAE_test = mae_values, MAE_train = mae_train_values)
 ggplot(df, aes(x = k)) + 
   geom_line(aes(y = MAE_test, color = "Test")) + 
@@ -165,7 +167,7 @@ ggplot(df, aes(x = k)) +
 
 
 ```{r warning=FALSE}
-get_mae(k=15)
+get_mae(k=15) #getting the mae for the train and test data with k=15
 ```
 
 
