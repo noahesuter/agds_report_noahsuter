@@ -208,6 +208,7 @@ model_Lae_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + WS_
 
 ### Using the caret function to determine the best model with maschine learning for Davos
 ```{r}
+# training the best knn model with the Davos train data
 library(tidyverse)
 library(recipes)
 set.seed(1982)
@@ -220,6 +221,7 @@ caret_dav_train_knn <- caret::train(model_dav_train,
 ```
 
 ```{r}
+# training the best lm model with the Davos train data
 caret_dav_train_lm <- caret::train(model_dav_train, 
   data = FLX_Dav_train |> drop_na(),  # drop missing values
   trControl = caret::trainControl(method = "none"), # no resampling
@@ -227,20 +229,69 @@ caret_dav_train_lm <- caret::train(model_dav_train,
 )
 ```
 
-
+### loading functions from .R file
 
 ```{r}
 source("../functions/large_files_ex_6.R") #loading all the large code chunks form another .R file
 ```
 
+### Within-site validation for Davos models
 ```{r}
-eval_model(mod = caret_dav_train_knn, df_train = FLX_Dav_train, df_test = FLX_Dav_test)
+eval_model(mod = caret_dav_train_knn, df_train = FLX_Dav_train, df_test = FLX_Dav_test) # within-site validation knn model davos
 ```
 
 ```{r}
-eval_model(mod = caret_dav_train_lm, df_train = FLX_Dav_train, df_test = FLX_Dav_test)
+eval_model(mod = caret_dav_train_lm, df_train = FLX_Dav_train, df_test = FLX_Dav_test) #within site validation for Davos lm model 
+```
+
+### Using the caret function to determine the best model with maschine learning for Laegern   
+
+```{r}
+# training the best knn model with the Laegern train data
+library(tidyverse)
+library(recipes)
+set.seed(1982)
+caret_Lae_train_knn <- caret::train(model_Lae_train, 
+                       data = FLX_Lae_train |> drop_na(), 
+                       method = "knn",
+                       trControl = caret::trainControl(method = "cv", number = 10),
+                       tuneGrid = data.frame(k = c(2, 5, 10, 15, 20, 25, 30, 35, 40, 60, 100)),
+                       metric = "MAE")
 ```
 
 
+```{r}
+# training the best lm model with the Laegern train data
+caret_Lae_train_lm <- caret::train(model_Lae_train, 
+  data = FLX_Lae_train |> drop_na(),  # drop missing values
+  trControl = caret::trainControl(method = "none"), # no resampling
+  method = "lm"
+)
+```
 
+### Within-site validation for Laegern models
+```{r}
+eval_model(mod = caret_Lae_train_knn, df_train = FLX_Lae_train, df_test = FLX_Lae_test) #within-site validation laegern knn model 
+```
+```{r}
+eval_model(mod = caret_Lae_train_lm, df_train = FLX_Lae_train, df_test = FLX_Lae_test) #within-site validation of Laegern lm model 
+```
 
+### Across site validation for Davos models 
+
+```{r}
+eval_model(mod = caret_dav_train_knn, df_train = FLX_Dav_train, df_test = FLX_Lae_test) # across-site validation for Davos knn model
+```
+
+```{r}
+eval_model(mod = caret_dav_train_lm, df_train = FLX_Dav_train, df_test = FLX_Lae_test) # across-site validation for davos lm model
+```
+### Across site validation for Laegern models
+
+```{r}
+eval_model(mod = caret_Lae_train_knn, df_train = FLX_Lae_train, df_test = FLX_Dav_test) #across-site validation for Laegern knn model
+```
+
+```{r}
+eval_model(mod = caret_Lae_train_lm, df_train = FLX_Lae_train, df_test = FLX_Dav_test) # Across-site validation for Laegern lm model
+```
