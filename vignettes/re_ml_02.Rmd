@@ -26,14 +26,13 @@ FLX_Lae <- readr::read_csv("../data/FLX_CH-Lae_FLUXNET2015_FULLSET_DD_2004-2014_
 FLX_Dav <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-2014_1-3.csv") # reading the data for Dav into R
 ```
 
-### Cleaning the data
+### Cleaning the Davos dataset
+
 
 ```{r}
-library(dplyr)
 library(lubridate)
-library(base)
-library(recipes)
-daily_fluxes <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-2014_1-3.csv") |>  
+library(dplyr)
+FLX_Dav <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-2014_1-3.csv")|> # reading the data for Dav into R   
   
   # select only the variables we are interested in
   dplyr::select(TIMESTAMP,
@@ -44,11 +43,11 @@ daily_fluxes <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-
                 ) |>
 
   # convert to a nice date object
-  dplyr::mutate(TIMESTAMP = ymd(TIMESTAMP)) |>
+  dplyr::mutate(TIMESTAMP = lubridate::ymd(TIMESTAMP)) |>
 
   # set all -9999 to NA
-  dplyr::na_if(-9999) |> # NOTE: Newer tidyverse version no longer support this statement
-                         # instead, use `mutate(across(where(is.numeric), ~na_if(., -9999))) |> ` 
+  mutate(across(where(is.numeric), ~na_if(., -9999))) |> #deleting all values -9999
+ 
   
   # retain only data based on >=80% good-quality measurements
   # overwrite bad data with NA (not dropping rows)
@@ -63,19 +62,9 @@ daily_fluxes <- readr::read_csv("../data/FLX_CH-Dav_FLUXNET2015_FULLSET_DD_1997-
 
   # drop QC variables (no longer needed)
   dplyr::select(-ends_with("_QC"))
-
-# Data splitting
-set.seed(123)  # for reproducibility
-split <- rsample::initial_split(daily_fluxes, prop = 0.7, strata = "VPD_F")
-daily_fluxes_train <- rsample::training(split)
-daily_fluxes_test <- rsample::testing(split)
-
-# The same model formulation is in the previous chapter
-pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F, 
-                      data = daily_fluxes_train) |> 
-  recipes::step_center(all_numeric(), -all_outcomes()) |>
-  recipes::step_scale(all_numeric(), -all_outcomes())
 ```
+
+### Cleaning the Laegern dataset
 
 
 
@@ -113,12 +102,5 @@ FLX_Lae_test <- rsample::testing(split)
 
 ### Testing
 
-```{r}
-pp <- recipes
-```
 
-```{r}
-library(caret)
-trc = trainControl(metho)
-```
 
