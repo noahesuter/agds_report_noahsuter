@@ -96,18 +96,6 @@ FLX_Lae <- readr::read_csv("../data/FLX_CH-Lae_FLUXNET2015_FULLSET_DD_2004-2014_
   dplyr::select(-ends_with("_QC"))
 ```
 
-```{r}
-visdat::vis_miss(FLX_Dav, warn_large_data = FALSE) #checking for missing values in the Dav dataset
-```
-
-```{r}
-visdat::vis_miss(FLX_Lae, warn_large_data = FALSE) #checking for missing values in the Dav dataset
-```
-One can see that both of the datasets do not have missing values
-
-```{r}
-FLX_Dav$GPP_NT_VUT_REF
-```
 
 ### Splitting the data
 
@@ -128,7 +116,23 @@ FLX_Lae_test <- rsample::testing(split)
 ```
 
 
-### Testing
+### Looking for missing values and removing missing values if needed
+I chose to delete the missing values before using the caret function, as the caret function would have removed the NA anyways.
+```{r}
+visdat::vis_miss(FLX_Dav_test, warn_large_data = FALSE) #checking for missing values in the Davos test set
+```
 
+```{r}
+visdat::vis_miss(FLX_Dav_train, warn_large_data = FALSE) #checking for missing values in the Davos train set
+```
+
+```{r}
+visdat::vis_miss(FLX_Lae_test, warn_large_data = FALSE) #checking for missing values in the Laegern test set
+```
+
+```{r}
+visdat::vis_miss(FLX_Lae_train, warn_large_data = FALSE) #checking for missing values in the Laegern train set
+```
+There are a lot of missing values in all of the datasets. One can see that there are only NA in P_F for the Laegern datasets. That means that one cannot just delete all the rows containing missing values, as all rows contain missing values. I decided to delete the column P_F. Afterwards i delete all the rows that still contain missing values. As of information of the exercise 9 (one before this exercise), the column LW_IN_F has a lot of missing values (at least within the Davos dataset) and is not decisive for the predicted value. And as the same value should be predicted in this exercise, i decided to delete this column out of all the datasets.
 
 
