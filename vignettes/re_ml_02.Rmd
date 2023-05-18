@@ -116,7 +116,7 @@ FLX_Lae_test <- rsample::testing(split)
 ```
 
 
-### Looking for missing values and removing missing values if needed
+### Looking for missing values
 I chose to delete the missing values before using the caret function, as the caret function would have removed the NA anyways.
 ```{r}
 visdat::vis_miss(FLX_Dav_test, warn_large_data = FALSE) #checking for missing values in the Davos test set
@@ -134,5 +134,89 @@ visdat::vis_miss(FLX_Lae_test, warn_large_data = FALSE) #checking for missing va
 visdat::vis_miss(FLX_Lae_train, warn_large_data = FALSE) #checking for missing values in the Laegern train set
 ```
 There are a lot of missing values in all of the datasets. One can see that there are only NA in P_F for the Laegern datasets. That means that one cannot just delete all the rows containing missing values, as all rows contain missing values. I decided to delete the column P_F. Afterwards i delete all the rows that still contain missing values. As of information of the exercise 9 (one before this exercise), the column LW_IN_F has a lot of missing values (at least within the Davos dataset) and is not decisive for the predicted value. And as the same value should be predicted in this exercise, i decided to delete this column out of all the datasets.
+
+### Deleting the column LW_IN_F
+
+```{r}
+FLX_Dav_test$LW_IN_F <- NULL #deleting the column LW_IN_F in Davos test set
+```
+
+```{r}
+FLX_Dav_train$LW_IN_F <- NULL #deleting the column LW_IN_F in Davos train set
+```
+
+```{r}
+FLX_Lae_test$LW_IN_F <- NULL #deleting the column LW_IN_F in Laegern test set
+```
+
+```{r}
+FLX_Lae_train$LW_IN_F <- NULL #deleting the column LW_IN_F in Laegern train test
+```
+
+### Deleting the column P_F in the Laegern dataset
+```{r}
+FLX_Lae_test$P_F <- NULL #deleting the column P_F in Laegern test set
+```
+
+```{r}
+FLX_Lae_train$P_F <- NULL #deleting the column P_F in Laegern train set
+```
+
+### Deleting the rows containing missing values
+```{r}
+FLX_Dav_test<- stats::na.omit(FLX_Dav_test) #deleting all the rows with missing values in Davos test set
+```
+
+```{r}
+FLX_Dav_train<- stats::na.omit(FLX_Dav_train) #deleting all the rows with missing values in Davos train set
+```
+
+```{r}
+FLX_Lae_test<- stats::na.omit(FLX_Lae_test) #deleting all the rows with missing values in Laegern test set
+```
+
+```{r}
+FLX_Lae_train<- stats::na.omit(FLX_Lae_train) #deleting all the rows with missing values in Laegern train set
+```
+
+
+
+### Defining the recipes of the models for the train datasets (Davos and Laegern)
+
+```{r}
+model_dav_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + P_F + WS_F + TA_F, 
+                      data = FLX_Dav_train) |> #recipe for the model of the Davos dataset
+  recipes::step_center(all_numeric(), -all_outcomes()) |>
+  recipes::step_scale(all_numeric(), -all_outcomes())
+```
+
+```{r}
+model_dav_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + WS_F + TA_F, 
+                      data = FLX_Lae_train) |> #recipe for the model of the Davos dataset
+  recipes::step_center(all_numeric(), -all_outcomes()) |>
+  recipes::step_scale(all_numeric(), -all_outcomes())
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+set.seed(1982)
+mod_cv <- caret::train(pp, 
+                       data = daily_fluxes_train |> drop_na(), 
+                       method = "knn",
+                       trControl = caret::trainControl(method = "cv", number = 10),
+                       tuneGrid = data.frame(k = c(2, 5, 10, 15, 20, 25, 30, 35, 40, 60, 100)),
+                       metric = "MAE")
+```
+
+
 
 
