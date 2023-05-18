@@ -78,17 +78,24 @@ FLX_Lae <- readr::read_csv("../data/FLX_CH-Lae_FLUXNET2015_FULLSET_DD_2004-2014_
 # Data splitting for Dav with a 80/20 split
 set.seed(1982)  # made for reproducibility
 split <- rsample::initial_split(FLX_Dav, prop = 0.8)
-FLX_Dav_train<- rsample::training(split)
-FLX_Dav_test <- rsample::testing(split)
+FLX_Dav_train_1 <- rsample::training(split)
+FLX_Dav_test_1 <- rsample::testing(split)
 
 
 
 # Data splitting for Lae with a 80/20 split
 set.seed(1982)  # made for reproducibility
 split <- rsample::initial_split(FLX_Lae, prop = 0.8)
-FLX_Lae_train<- rsample::training(split)
-FLX_Lae_test <- rsample::testing(split)
+FLX_Lae_train_1 <- rsample::training(split)
+FLX_Lae_test_1 <- rsample::testing(split)
 
+
+### renaming the dataframes
+
+FLX_Dav_test <- FLX_Dav_test_1
+FLX_Dav_train <- FLX_Dav_train_1
+FLX_Lae_test <- FLX_Lae_test_1
+FLX_Lae_train <- FLX_Lae_train_1
 
 ### Deleting the column LW_IN_F
 
