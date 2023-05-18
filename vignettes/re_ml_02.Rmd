@@ -153,13 +153,21 @@ FLX_Lae_test$LW_IN_F <- NULL #deleting the column LW_IN_F in Laegern test set
 FLX_Lae_train$LW_IN_F <- NULL #deleting the column LW_IN_F in Laegern train test
 ```
 
-### Deleting the column P_F in the Laegern dataset
+### Deleting the column P_F 
 ```{r}
 FLX_Lae_test$P_F <- NULL #deleting the column P_F in Laegern test set
 ```
 
 ```{r}
 FLX_Lae_train$P_F <- NULL #deleting the column P_F in Laegern train set
+```
+
+```{r}
+FLX_Dav_test$P_F <- NULL #deleting the column P_F in Davos test set
+```
+
+```{r}
+FLX_Dav_train$P_F <- NULL #deleting the column P_F in Davos train set
 ```
 
 ### Deleting the rows containing missing values
@@ -191,31 +199,58 @@ model_dav_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + P_F
 ```
 
 ```{r}
-model_dav_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + WS_F + TA_F, 
+model_Lae_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + WS_F + TA_F, 
                       data = FLX_Lae_train) |> #recipe for the model of the Davos dataset
   recipes::step_center(all_numeric(), -all_outcomes()) |>
   recipes::step_scale(all_numeric(), -all_outcomes())
 ```
 
 
-
-
-
-
-
-
-
-
-
+### Using the caret function to determine the best model with maschine learning
 ```{r}
+library(tidyverse)
+library(recipes)
 set.seed(1982)
-mod_cv <- caret::train(pp, 
-                       data = daily_fluxes_train |> drop_na(), 
+caret_dav_train_knn <- caret::train(model_dav_train, 
+                       data = FLX_Dav_train |> drop_na(), 
                        method = "knn",
                        trControl = caret::trainControl(method = "cv", number = 10),
                        tuneGrid = data.frame(k = c(2, 5, 10, 15, 20, 25, 30, 35, 40, 60, 100)),
                        metric = "MAE")
 ```
+
+```{r}
+ggplot(caret_dav_train_knn)
+```
+
+```{r}
+print(caret_dav_train_knn)
+```
+
+
+```{r}
+source("../functions/large_files_ex_6.R") #loading all the large code chunks form another .R file
+```
+
+
+```{r}
+k_values <- c(1:40)
+mae_values <- sapply(k_values, function(k) get_mae(k)$mae_test)
+mae_train_values <- sapply(k_values, function(k) get_mae(k)$mae_train)
+```
+
+```{r}
+# Determine optimal k value
+optimal_k <- k_values[which.min(mae_values)]
+
+# Print results
+cat("Optimal k value for generalizability:", optimal_k, "\n")
+cat("MAE on test set for optimal k value:", mae_values[which.min(mae_values)], "\n")
+cat("MAE on training set for optimal k value:", mae_train_values[which.min(mae_values)], "\n")
+```
+
+
+
 
 
 
