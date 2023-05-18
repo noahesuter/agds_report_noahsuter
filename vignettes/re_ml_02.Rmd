@@ -192,7 +192,7 @@ FLX_Lae_train<- stats::na.omit(FLX_Lae_train) #deleting all the rows with missin
 ### Defining the recipes of the models for the train datasets (Davos and Laegern)
 
 ```{r}
-model_dav_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + P_F + WS_F + TA_F, 
+model_dav_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + WS_F + TA_F, 
                       data = FLX_Dav_train) |> #recipe for the model of the Davos dataset
   recipes::step_center(all_numeric(), -all_outcomes()) |>
   recipes::step_scale(all_numeric(), -all_outcomes())
@@ -206,7 +206,7 @@ model_Lae_train <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + PA_F + WS_
 ```
 
 
-### Using the caret function to determine the best model with maschine learning
+### Using the caret function to determine the best model with maschine learning for Davos
 ```{r}
 library(tidyverse)
 library(recipes)
@@ -220,37 +220,26 @@ caret_dav_train_knn <- caret::train(model_dav_train,
 ```
 
 ```{r}
-ggplot(caret_dav_train_knn)
+caret_dav_train_lm <- caret::train(model_dav_train, 
+  data = FLX_Dav_train |> drop_na(),  # drop missing values
+  trControl = caret::trainControl(method = "none"), # no resampling
+  method = "lm"
+)
 ```
 
-```{r}
-print(caret_dav_train_knn)
-```
 
 
 ```{r}
 source("../functions/large_files_ex_6.R") #loading all the large code chunks form another .R file
 ```
 
-
 ```{r}
-k_values <- c(1:40)
-mae_values <- sapply(k_values, function(k) get_mae(k)$mae_test)
-mae_train_values <- sapply(k_values, function(k) get_mae(k)$mae_train)
+eval_model(mod = caret_dav_train_knn, df_train = FLX_Dav_train, df_test = FLX_Dav_test)
 ```
 
 ```{r}
-# Determine optimal k value
-optimal_k <- k_values[which.min(mae_values)]
-
-# Print results
-cat("Optimal k value for generalizability:", optimal_k, "\n")
-cat("MAE on test set for optimal k value:", mae_values[which.min(mae_values)], "\n")
-cat("MAE on training set for optimal k value:", mae_train_values[which.min(mae_values)], "\n")
+eval_model(mod = caret_dav_train_lm, df_train = FLX_Dav_train, df_test = FLX_Dav_test)
 ```
-
-
-
 
 
 
