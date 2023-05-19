@@ -18,6 +18,7 @@ airquality <- datasets::airquality #loading the data set and creating a table
 ```{r}
 visdat::vis_miss(airquality) #checking for missing values
 ```
+
 One can see that a big part of the ozone values are missing with 24%. But the Solar radiation has missing values as well (5%). This will be important to consider if one of these two is used. (especially important for the interpretation)
 
 ## Task 1

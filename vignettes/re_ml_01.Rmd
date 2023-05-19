@@ -60,7 +60,7 @@ eval_model(mod = mod_lm, df_train = half_hourly_fluxes_train, df_test = half_hou
 eval_model(mod = mod_knn, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test) #running the knn model with train and test data
 ```
 
-###Interpretation
+### Interpretation
 
 **Question 1: Why is the difference between the evaluation and the test set larger for the KNN model than for the linear regression model?**
 
