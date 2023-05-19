@@ -37,6 +37,7 @@ visdat::vis_miss(FLX_Lae_test_1, warn_large_data = FALSE) #checking for missing 
 ```{r warning=FALSE, message=FALSE}
 visdat::vis_miss(FLX_Lae_train_1, warn_large_data = FALSE) #checking for missing values in the Laegern train set
 ```
+
 There are a lot of missing values in all of the datasets. One can see that there are only NA in P_F for the Laegern datasets. That means that one cannot just delete all the rows containing missing values, as all rows contain missing values. I decided to delete the column P_F. Afterwards i delete all the rows that still contain missing values. As of information of the exercise 9 (one before this exercise), the column LW_IN_F has a lot of missing values (at least within the Davos dataset) and is not decisive for the predicted value. And as the same value should be predicted in this exercise, i decided to delete this column out of all the datasets.
 
 
@@ -78,9 +79,9 @@ eval_model(mod = caret_combined_train_knn, df_train = bind_FLX_train, df_test = 
 There is a very small difference of the KNN model which indicates that it seems not to be overfitting. Therefore it seems to be well generalizable. If we compare this to the differences found within the across-site validations for the KNN model, it seems as if these are overfitting as there is a big difference to be found. If we compare the values we can see that for the test set, the R2 and the RMSE are suggesting a better model for the pooled data. But it can be a bad idea to pool data together. Following are some reasons why it can be bad.
 
 **Problems with Pooling data from two sites:**
-* the sites can have their own unique characterisics, data distributions or patterns.
-* by pooling one may intoduce biases or overlook site-specific variations
-* there can be site specific nuances that may not be captured by pooling the data
+- the sites can have their own unique characterisics, data distributions or patterns.
+- by pooling one may intoduce biases or overlook site-specific variations
+- there can be site specific nuances that may not be captured by pooling the data
 
 **When could it make sense to pool data together?:**
 if both of the sites have similar characteristics, per example: in terms of climate, vegetation, altitude, etc.
@@ -91,4 +92,35 @@ the next exercise is a more detailed analysis of the things like the climate, ve
 
 ### Analysis of the characteristics of the two sites
 
+**Davos:**
 
+*Elevation (m)*: 1639
+
+*Mean Annual Temp (°C)*: 2.8
+
+*Mean Annual Precip. (mm)*: 1062
+
+*Years of data*: 1997 - 2014
+
+*Vegetation IGBP*: ENF (Evergreen Needleleaf Forests: Lands dominated by woody vegetation with a percent cover >60% and height exceeding 2 meters. Almost all trees remain green all year. Canopy is never without green foliage.)
+
+*Source (DOI)*:https://doi.org/10.18140/FLX/1440132
+
+
+**Laegern:**
+
+*Elevation (m)*: 689
+
+*Mean Annual Temp (°C)*: 8.3
+
+*Mean Annual Precip. (mm)*: 1100
+
+*Years of data*: 2004 - 2014
+
+*Vegetation IGBP*: MF (Mixed Forests: Lands dominated by trees with a percent cover >60% and height exceeding 2 meters. Consists of tree communities with interspersed mixtures or mosaics of the other four forest types. None of the forest types exceeds 60% of landscape.)
+
+*Source (DOI)*:https://doi.org/10.18140/FLX/1440134
+
+**Final Interpretation:**
+
+As one can see, the two sites have quite different characteristics. Therefore it does not make that much sense to pool the data together. 

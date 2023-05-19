@@ -182,8 +182,8 @@ for (i in seq_along(models)) {
 
 
 ```{r warning=FALSE, message=FALSE}
-library(dplyr)
-library(base)
+library(dplyr, warn.conflicts = FALSE)
+library(base, warn.conflicts = FALSE)
 
 # Group by Formula and summarize 
 dataframe_model_values <- model_stats %>%
@@ -204,8 +204,8 @@ print(dataframe_model_values[1, ])
 ```
 The choice of the model makes sense as the lowest AIC is being chosen (the model with the lowest AIC is the best model). It as well makes sense that it stopped after the predictor P_F. Because the model had better AIC values (lower AIC) if no more predictors were added. Additionaly one can see that the highest r squared cannot be found within the best model. This is the case as the r squared just states the best model for this exact data. the adjusted R squared contains the model that has the best generalizabiliy and therfore can be used for new data as well (with the same response variable and predictors. In the end the step function extracts the model with the lowest AIC and the best model is chosen by this value. Therefore the AIC value determines the best model in the end.
 ```{r warning=FALSE, message=FALSE}
-library(tidyverse)
-library(psych)
+library(tidyverse, warn.conflicts = FALSE)
+library(psych, warn.conflicts = FALSE)
 
 pairs.panels(half_hourly_fluxes_clean[,c("PPFD_IN", "siteid", "LW_IN_F", "VPD_F_MDS", "TA_F_MDS","SW_IN_F", "WS_F", "USTAR",  "VPD_F", "CO2_F_MDS", "PA_F", "TIMESTAMP", "P_F")], method= "spearman", lm=TRUE)
 ```
