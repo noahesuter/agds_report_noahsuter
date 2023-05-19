@@ -247,7 +247,122 @@ caret_combined_train_knn <- caret::train(model_combined_train,
 
 
 
-# make model evaluation into a function to reuse code
+# make model evaluation into a function to reuse code for within-site and across-site
+eval_model1 <- function(mod1, df_train1, df_test1, mod2, df_train2, df_test2){
+  #loading packages
+  library(dplyr)
+  library(ggplot2)
+  library(yardstick)
+  library(cowplot)
+  # add predictions to the data frames
+  df_train1 <- df_train1 |> 
+    drop_na()
+  df_train1$fitted <- predict(mod1, newdata = df_train1)
+  
+  df_test1 <- df_test1 |> 
+    drop_na()
+  df_test1$fitted <- predict(mod1, newdata = df_test1)
+
+  df_train2 <- df_train2 |> 
+    drop_na()
+  df_train2$fitted <- predict(mod2, newdata = df_train2)
+  
+  df_test2 <- df_test2 |> 
+    drop_na()
+  df_test2$fitted <- predict(mod2, newdata = df_test2)
+  
+  
+  # get metrics tables
+  metrics_train1 <- df_train1 |> 
+    yardstick::metrics(GPP_NT_VUT_REF, fitted)
+  
+  metrics_test1 <- df_test1 |> 
+    yardstick::metrics(GPP_NT_VUT_REF, fitted)
+
+  metrics_train2 <- df_train2 |> 
+    yardstick::metrics(GPP_NT_VUT_REF, fitted)
+  
+  metrics_test2 <- df_test2 |> 
+    yardstick::metrics(GPP_NT_VUT_REF, fitted)
+  
+  # extract values from metrics tables
+  rmse_train1 <- metrics_train1 |> 
+    filter(.metric == "rmse") |> 
+    pull(.estimate)
+  rsq_train1 <- metrics_train1 |> 
+    filter(.metric == "rsq") |> 
+    pull(.estimate)
+  
+  rmse_test1 <- metrics_test1 |> 
+    filter(.metric == "rmse") |> 
+    pull(.estimate)
+  rsq_test1 <- metrics_test1 |> 
+    filter(.metric == "rsq") |> 
+    pull(.estimate)
+  
+  rmse_train2 <- metrics_train2 |> 
+    filter(.metric == "rmse") |> 
+    pull(.estimate)
+  rsq_train2 <- metrics_train2 |> 
+    filter(.metric == "rsq") |> 
+    pull(.estimate)
+  
+  rmse_test2 <- metrics_test2 |> 
+    filter(.metric == "rmse") |> 
+    pull(.estimate)
+  rsq_test2 <- metrics_test2 |> 
+    filter(.metric == "rsq") |> 
+    pull(.estimate)
+  
+  
+  # visualise as a scatterplot
+  # adding information of metrics as sub-titles
+  plot_1 <- ggplot(data = df_train1, aes(GPP_NT_VUT_REF, fitted)) +
+    geom_point(alpha = 0.3) +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+    labs(subtitle = bquote( italic(R)^2 == .(format(rsq_train1, digits = 2)) ~~
+                              RMSE == .(format(rmse_train1, digits = 3))),
+         title = "Training set knn") +
+    theme_classic()
+  
+  plot_2 <- ggplot(data = df_test1, aes(GPP_NT_VUT_REF, fitted)) +
+    geom_point(alpha = 0.3) +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+    labs(subtitle = bquote( italic(R)^2 == .(format(rsq_test1, digits = 2)) ~~
+                              RMSE == .(format(rmse_test1, digits = 3))),
+         title = "Test set knn") +
+    theme_classic()
+  
+  plot_3 <- ggplot(data = df_train2, aes(GPP_NT_VUT_REF, fitted)) +
+    geom_point(alpha = 0.3) +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+    labs(subtitle = bquote( italic(R)^2 == .(format(rsq_train2, digits = 2)) ~~
+                              RMSE == .(format(rmse_train2, digits = 3))),
+         title = "Training set lm") +
+    theme_classic()
+  
+  plot_4 <- ggplot(data = df_test2, aes(GPP_NT_VUT_REF, fitted)) +
+    geom_point(alpha = 0.3) +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+    labs(subtitle = bquote( italic(R)^2 == .(format(rsq_test2, digits = 2)) ~~
+                              RMSE == .(format(rmse_test2, digits = 3))),
+         title = "Test set lm") +
+    theme_classic()
+  
+  
+  out <- cowplot::plot_grid(plot_1, plot_2, plot_3, plot_4, ncol = 2)
+  
+  return(out)
+}
+
+
+
+
+# make model evaluation into a function to reuse code for the combined model
 eval_model <- function(mod, df_train, df_test){
   #loading packages
   library(dplyr)
@@ -262,7 +377,7 @@ eval_model <- function(mod, df_train, df_test){
   df_test <- df_test |> 
     drop_na()
   df_test$fitted <- predict(mod, newdata = df_test)
-
+  
   
   # get metrics tables
   metrics_train <- df_train |> 
@@ -270,7 +385,7 @@ eval_model <- function(mod, df_train, df_test){
   
   metrics_test <- df_test |> 
     yardstick::metrics(GPP_NT_VUT_REF, fitted)
-
+  
   
   # extract values from metrics tables
   rmse_train <- metrics_train |> 
@@ -313,5 +428,4 @@ eval_model <- function(mod, df_train, df_test){
   
   return(out)
 }
-
 
