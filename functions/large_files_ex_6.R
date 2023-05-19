@@ -315,35 +315,3 @@ eval_model <- function(mod, df_train, df_test){
 }
 
 
-
-get_mae <- function(k) {
-  library(rsample)
-  library(tidyr)
-  library(caret)
-  library(recipes)
-  library(ggplot2)
-  # Define function to train and evaluate KNN model
-  
-
-  # Fit KNN model
-  mod_knn <- caret::train(
-    model_dav_train, 
-    data = FLX_Dav_train, 
-    method = "knn",
-    trControl = caret::trainControl(method = "none"),
-    tuneGrid = data.frame(k = k),
-    metric = "MAE"
-  )
-  # Evaluate model on test set
-  new_data <- drop_na(FLX_Dav_test)
-  pred <- predict(mod_knn, newdata = new_data)
-  obs <- new_data$GPP_NT_VUT_REF
-  mae <- caret::MAE(pred, obs)
-  
-  # Evaluate model on training set
-  pred_train <- predict(mod_knn, newdata = drop_na(FLX_Dav_train))
-  obs_train <- drop_na(FLX_Dav_train)$GPP_NT_VUT_REF
-  mae_train <- caret::MAE(pred_train, obs_train)
-  
-  return(list("mae_train" = mae_train, "mae_test" = mae))
-}
