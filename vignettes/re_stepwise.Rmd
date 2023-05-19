@@ -1,5 +1,5 @@
 ---
-title: "re_stepwise_1"
+title: "re_stepwise"
 author: "Noah Suter"
 date: "`r Sys.Date()`"
 output: html_document
@@ -30,11 +30,11 @@ We can see that quite a few rows contain missing values. It will be important to
 summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) per row
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 half_hourly_fluxes_new_order <- dplyr::select(half_hourly_fluxes,`GPP_NT_VUT_REF`, everything()) #moving the column of the response variable (GPP) to position one
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes_new_order)
 ```
 
@@ -71,7 +71,9 @@ for (predictor in c("none", "siteid", "TIMESTAMP", "TA_F", "SW_IN_F", "LW_IN_F",
   # Store the results of the model in the list
   results[[predictor]] <- c(formula_string, AIC(model), summary(model)$r.squared, summary(model)$adj.r.squared)
 }
+```
 
+```{r warning=FALSE, message=FALSE}
 # Converting the list of results into a data frame
 results_bivariate <- as.data.frame(do.call(rbind, results))
 
@@ -86,8 +88,8 @@ results_bivariate <- results_bivariate[order(results_bivariate$AIC), ]
 
 # Print the results (of the 10 best models)
 results_bivariate[1:10,]
-
 ```
+
 
 Here we get the bivariate models already sorted ascending by the AIC. Therefore the best bivariate model is to find on top. As the lowest AIC is the best, this predictor should be used. In this case it would be PPFD_IN. As <none> is not the best option, it makes sense to continue to improve the model by doing a stepwise forward regression. Additionally, One can see that the R squared as well as the adjusted R squared is increasing if higher up (=better AIC). That makes sense as the model is better for this data if there is a higher R squared. The higher the adjusted R squared, the higher the Generalizability. Therefore it makes sense that the best model (highest AIC) has the highest adjusted R squared as well. It would be possible that the best model does not have the highest R squared, but in this case the highest R squared correlates with the lowest AIC. (It would make sense as the r squared just looks at the best model for this data but not for new data)
 
@@ -106,7 +108,7 @@ One can suspect a linear correlation between these two values. But is is not pos
 
 ## Full stepwise forward regression with a loop
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 # Defining the response variable
 response_var <- "GPP_NT_VUT_REF"
 # Creating a vector to store the selected predictors
@@ -146,6 +148,10 @@ for (i in 1:ncol(half_hourly_fluxes_clean)) {
   
   
 }
+```
+
+```{r warning=FALSE, message=FALSE}
+
 # creating a data frame to store the model statistics
 model_stats <- data.frame(Model = character(),
                            AIC = numeric(),
@@ -174,7 +180,8 @@ for (i in seq_along(models)) {
 ```
 
 
-```{r}
+
+```{r warning=FALSE, message=FALSE}
 library(dplyr)
 library(base)
 
@@ -188,7 +195,7 @@ dataframe_model_values <- model_stats %>%
 dataframe_model_values[1] <- NULL
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 # Sort the model statistics data frame by ascending AIC values
 dataframe_model_values <- dataframe_model_values[order(dataframe_model_values$AIC), ]
 # Print the top row of the model statistics data frame to extract the best model
@@ -196,7 +203,7 @@ cat("Best model based on AIC:\n")
 print(dataframe_model_values[1, ])
 ```
 The choice of the model makes sense as the lowest AIC is being chosen (the model with the lowest AIC is the best model). It as well makes sense that it stopped after the predictor P_F. Because the model had better AIC values (lower AIC) if no more predictors were added. Additionaly one can see that the highest r squared cannot be found within the best model. This is the case as the r squared just states the best model for this exact data. the adjusted R squared contains the model that has the best generalizabiliy and therfore can be used for new data as well (with the same response variable and predictors. In the end the step function extracts the model with the lowest AIC and the best model is chosen by this value. Therefore the AIC value determines the best model in the end.
-```{r warning=FALSE}
+```{r warning=FALSE, message=FALSE}
 library(tidyverse)
 library(psych)
 
@@ -220,7 +227,7 @@ stats::formula(FitAll) #printing the full formula
 model_step <- stats::step(FitStart, direction = "forward", scope = formula(FitAll)) # doing the stepwise forward regression
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 stats::formula(model_step)
 ```
 One can see that the result is the same as the result achieved by the loop before. This shows that the loop worked properly. 
@@ -230,7 +237,7 @@ One can see that the result is the same as the result achieved by the loop befor
 
 As we deleted the missing values, we now have a impact on the quality of the data as almost 2/3 of the rows were deleted. Therefore on could try another option of handling missing data. Another option would be to Impute the data. There one possibility would be to impute the mean, but a better option is to work with mice and run a iterativ process that predicts what the missing values could be based on the values that are not missing. There we can pool the best result and then do a stepwise forward regression with this imputed data. I'm going to show one possibility but will not let the code evaluate as it could take some time to knit that way.$
 
-```{r results='hide'}
+```{r results='hide', warning=FALSE, message=FALSE}
 mice::md.pattern(half_hourly_fluxes) #checking the pattern of the missing data
 ```
 

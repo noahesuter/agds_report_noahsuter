@@ -72,6 +72,7 @@ As only one model should be trained, i chose to do the knn model as it is a bit 
 ```{r warning=FALSE, message=FALSE}
 eval_model(mod = caret_combined_train_knn, df_train = bind_FLX_train, df_test = bind_FLX_test) #within site validation for the knn model of the pooled data
 ```
+
 ### Interpretation 
 
 There is a very small difference of the KNN model which indicates that it seems not to be overfitting. Therefore it seems to be well generalizable. If we compare this to the differences found within the across-site validations for the KNN model, it seems as if these are overfitting as there is a big difference to be found. If we compare the values we can see that for the test set, the R2 and the RMSE are suggesting a better model for the pooled data. But it can be a bad idea to pool data together. Following are some reasons why it can be bad.
