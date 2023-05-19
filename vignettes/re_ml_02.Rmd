@@ -44,27 +44,24 @@ There are a lot of missing values in all of the datasets. One can see that there
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_dav_train_knn, df_train1 = FLX_Dav_train, df_test1 = FLX_Dav_test, mod2 = caret_dav_train_lm, df_train2 = FLX_Dav_train, df_test2 = FLX_Dav_test) #within-site validation for Davos models
 ```
-### Interpretation of the within-site validation of Davos models
+
 
 ### Within-site validation for Laegern models
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_Lae_train_knn, df_train1 = FLX_Lae_train, df_test1 = FLX_Lae_test, mod2 = caret_Lae_train_lm, df_train2 = FLX_Lae_train, df_test2 = FLX_Lae_test) #within-site validation for Laegern models
 ```
-### Interpretation of the within-site validation of Laegern models
 
 ### Across-site validation for Davos models 
 
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_dav_train_knn, df_train1 = FLX_Dav_train, df_test1 = FLX_Lae_test, mod2 = caret_dav_train_lm, df_train2 = FLX_Dav_train, df_test2 = FLX_Lae_test) #across-site validation for Davos models
 ```
-### Interpretation of the across-site validation for Davos models
 
 ### Across-site validation for Laegern models
 
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_Lae_train_knn, df_train1 = FLX_Lae_train, df_test1 = FLX_Dav_test, mod2 = caret_Lae_train_lm, df_train2 = FLX_Lae_train, df_test2 = FLX_Dav_test) #across-site validation for the Laegern models
 ```
-### Interpretation of the across-site validation for Laegern models
 
 ### Training a knn model with the pooled dataset
 As only one model should be trained, i chose to do the knn model as it is a bit more prone to overfitting and i therefore hope for more generalisable results.
@@ -75,6 +72,22 @@ As only one model should be trained, i chose to do the knn model as it is a bit 
 ```{r warning=FALSE, message=FALSE}
 eval_model(mod = caret_combined_train_knn, df_train = bind_FLX_train, df_test = bind_FLX_test) #within site validation for the knn model of the pooled data
 ```
-### Interpretation of the pooled validation
+### Interpretation 
+
+There is a very small difference of the KNN model which indicates that it seems not to be overfitting. Therefore it seems to be well generalizable. If we compare this to the differences found within the across-site validations for the KNN model, it seems as if these are overfitting as there is a big difference to be found. If we compare the values we can see that for the test set, the R2 and the RMSE are suggesting a better model for the pooled data. But it can be a bad idea to pool data together. Following are some reasons why it can be bad.
+
+**Problems with Pooling data from two sites:**
+* the sites can have their own unique characterisics, data distributions or patterns.
+* by pooling one may intoduce biases or overlook site-specific variations
+* there can be site specific nuances that may not be captured by pooling the data
+
+**When could it make sense to pool data together?:**
+if both of the sites have similar characteristics, per example: in terms of climate, vegetation, altitude, etc.
+Then it could make sense as it could enable a more robust and generalizable model as it uses more data for the training of the model. 
+But one would need strong indicaters of that to ensure that the mentioned problems are not influence the model.
+
+the next exercise is a more detailed analysis of the things like the climate, vegetation, altitude, etc of the two sites. This may give an idea whether it made sense to pool the data together.
+
+### Analysis of the characteristics of the two sites
 
 
