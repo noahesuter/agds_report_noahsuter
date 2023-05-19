@@ -44,27 +44,27 @@ There are a lot of missing values in all of the datasets. One can see that there
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_dav_train_knn, df_train1 = FLX_Dav_train, df_test1 = FLX_Dav_test, mod2 = caret_dav_train_lm, df_train2 = FLX_Dav_train, df_test2 = FLX_Dav_test) #within-site validation for Davos models
 ```
-#### Interpretation
+### Interpretation of the within-site validation of Davos models
 
 ### Within-site validation for Laegern models
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_Lae_train_knn, df_train1 = FLX_Lae_train, df_test1 = FLX_Lae_test, mod2 = caret_Lae_train_lm, df_train2 = FLX_Lae_train, df_test2 = FLX_Lae_test) #within-site validation for Laegern models
 ```
-#### Interpretation
+### Interpretation of the within-site validation of Laegern models
 
 ### Across-site validation for Davos models 
 
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_dav_train_knn, df_train1 = FLX_Dav_train, df_test1 = FLX_Lae_test, mod2 = caret_dav_train_lm, df_train2 = FLX_Dav_train, df_test2 = FLX_Lae_test) #across-site validation for Davos models
 ```
-#### Interpretation
+### Interpretation of the across-site validation for Davos models
 
 ### Across-site validation for Laegern models
 
 ```{r warning=FALSE, message=FALSE}
 eval_model1(mod1 = caret_Lae_train_knn, df_train1 = FLX_Lae_train, df_test1 = FLX_Dav_test, mod2 = caret_Lae_train_lm, df_train2 = FLX_Lae_train, df_test2 = FLX_Dav_test) #across-site validation for the Laegern models
 ```
-#### Interpretation
+### Interpretation of the across-site validation for Laegern models
 
 ### Training a knn model with the pooled dataset
 As only one model should be trained, i chose to do the knn model as it is a bit more prone to overfitting and i therefore hope for more generalisable results.
@@ -75,6 +75,6 @@ As only one model should be trained, i chose to do the knn model as it is a bit 
 ```{r warning=FALSE, message=FALSE}
 eval_model(mod = caret_combined_train_knn, df_train = bind_FLX_train, df_test = bind_FLX_test) #within site validation for the knn model of the pooled data
 ```
-#### Interpretation
+### Interpretation of the pooled validation
 
 

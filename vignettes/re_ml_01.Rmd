@@ -101,6 +101,26 @@ eval_model(mod = mod_knn, df_train = half_hourly_fluxes_train, df_test = half_ho
 ```
 ###Interpretation
 
+**Question 1: Why is the difference between the evaluation and the test set larger for the KNN model than for the linear regression model?**
+
+The bigger difference of the KNN model suggests that it might be overfitting. This can be expected as the KNN models are prone to overfitting.
+More exaclty the R2 indicates a drop in performance as the R2 decreases from the training to the test set.
+The RMSE increases which indicates a higher predicted error for the test set.
+
+**Question 2: Why does the evaluation on the test set indicate a better model performance of the KNN model than the linear regression model?**
+
+As the KNN model has a higher R2 and a lower RMSE in comparison to the lm model. (which indicates a better model performance) But it is difficult to say which model is better in the end as the difference is not that big.
+
+**Question 3: How would you position the KNN and the linear regression model along the spectrum of the bias-variance-trade-off?**
+
+typically the KNN has a higher variance and therefore a lower bias.
+The lm typically is lower variance and therefore higher bias
+
+And the same can be seen within the results. Because the larger difference for the knn model indicates a rather higher variance
+
+the lm has a smaller difference and therefore a rather higher bias and a lower variance.
+
+
 ### Visualisation of the temporal variations of observed and modelled GPP for both models
 
 ```{r}
