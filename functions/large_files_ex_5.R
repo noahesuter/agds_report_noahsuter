@@ -1,3 +1,44 @@
+### Implementation of the given code
+library(rsample)
+library(recipes)
+library(caret)
+library(tidyr)
+
+# Data splitting with a 30/70 split
+set.seed(1982)  # made for reproducibility
+split <- rsample::initial_split(half_hourly_fluxes_clean, prop = 0.7, strata = "VPD_F")
+half_hourly_fluxes_train <- rsample::training(split)
+half_hourly_fluxes_test <- rsample::testing(split)
+
+# Model and pre-processing formulation, use all variables but LW_IN_F
+pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F, 
+                      data = half_hourly_fluxes_train |> drop_na()) |> 
+  recipes::step_BoxCox(all_predictors()) |> 
+  recipes::step_center(all_numeric(), -all_outcomes()) |>
+  recipes::step_scale(all_numeric(), -all_outcomes())
+
+# Fit linear regression model
+mod_lm <- caret::train(
+  pp, 
+  data = half_hourly_fluxes_train |> drop_na(),
+  method = "lm",
+  trControl = caret::trainControl(method = "none"),
+  metric = "RMSE"
+)
+
+# Fit KNN model
+mod_knn <- caret::train(
+  pp, 
+  data = half_hourly_fluxes_train|> drop_na(), 
+  method = "knn",
+  trControl = caret::trainControl(method = "none"),
+  tuneGrid = data.frame(k = 8),
+  metric = "RMSE"
+)
+
+
+
+
 # make model evaluation into a function to reuse code
 eval_model <- function(mod, df_train, df_test){
   #loading packages

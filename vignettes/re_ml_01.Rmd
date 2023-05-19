@@ -31,7 +31,7 @@ visdat::vis_miss(half_hourly_fluxes) #checking for missing values
 summary(half_hourly_fluxes) #looking at the exact number of missing values (NA) per row
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 half_hourly_fluxes_clean <- stats::na.omit(half_hourly_fluxes) #deleting all the rows with missing values
 ```
 
@@ -46,49 +46,9 @@ half_hourly_fluxes_clean |>
 ```
 
 ## Task 1 - Comparison of the linear regression and KNN models
-### Implementation of the given code
-```{r warning=FALSE, message=FALSE}
-library(rsample)
-library(recipes)
-library(caret)
-library(tidyr)
-
-# Data splitting
-set.seed(1982)  # made for reproducibility
-split <- rsample::initial_split(half_hourly_fluxes_clean, prop = 0.7, strata = "VPD_F")
-half_hourly_fluxes_train <- rsample::training(split)
-half_hourly_fluxes_test <- rsample::testing(split)
-
-# Model and pre-processing formulation, use all variables but LW_IN_F
-pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F, 
-                      data = half_hourly_fluxes_train |> drop_na()) |> 
-  recipes::step_BoxCox(all_predictors()) |> 
-  recipes::step_center(all_numeric(), -all_outcomes()) |>
-  recipes::step_scale(all_numeric(), -all_outcomes())
-
-# Fit linear regression model
-mod_lm <- caret::train(
-  pp, 
-  data = half_hourly_fluxes_train |> drop_na(),
-  method = "lm",
-  trControl = caret::trainControl(method = "none"),
-  metric = "RMSE"
-)
-
-# Fit KNN model
-mod_knn <- caret::train(
-  pp, 
-  data = half_hourly_fluxes_train|> drop_na(), 
-  method = "knn",
-  trControl = caret::trainControl(method = "none"),
-  tuneGrid = data.frame(k = 8),
-  metric = "RMSE"
-)
-```
 
 
-
-```{r}
+```{r message=FALSE, warning=FALSE}
 source("../functions/large_files_ex_5.R") #loading all the large code chunks form another .R file
 ```
 
@@ -99,6 +59,7 @@ eval_model(mod = mod_lm, df_train = half_hourly_fluxes_train, df_test = half_hou
 # KNN model
 eval_model(mod = mod_knn, df_train = half_hourly_fluxes_train, df_test = half_hourly_fluxes_test) #running the knn model with train and test data
 ```
+
 ###Interpretation
 
 **Question 1: Why is the difference between the evaluation and the test set larger for the KNN model than for the linear regression model?**
@@ -127,10 +88,10 @@ the lm has a smaller difference and therefore a rather higher bias and a lower v
 library(ggplot2)
 # create a dataframe with the dates and observed GPP
 observed <- data.frame(Date = half_hourly_fluxes_clean$TIMESTAMP, GPP = half_hourly_fluxes_clean$GPP_NT_VUT_REF)
-# add columns with modelled GPP for linear regression and KNN
+# add columns with modelled GPP for lm and KNN models
 observed$lm <- predict(mod_lm, newdata = half_hourly_fluxes_clean)
 observed$knn <- predict(mod_knn, newdata = half_hourly_fluxes_clean)
-# create a line plot for observed and modelled GPP for linear regression models
+# create a line plot that shows observed and modelled GPP for linear regression models
 ggplot(observed, aes(x = Date)) +
   geom_line(aes(y = GPP, color = "Observed")) +
   geom_line(aes(y = lm, color = "Linear Regression")) +
@@ -139,7 +100,7 @@ ggplot(observed, aes(x = Date)) +
   ggtitle("Observed and Modelled GPP for Linear Regression")
 ```
 ```{r}
-# create a line plot for observed and modelled GPP for KNN models
+# create a line plot that shows observed and modelled GPP for KNN models
 ggplot(observed, aes(x = Date)) +
   geom_line(aes(y = GPP, color = "Observed")) +
   geom_line(aes(y = knn, color = "KNN",)) +
@@ -171,7 +132,7 @@ mae_train_values <- sapply(k_values, function(k) get_mae(k)$mae_train)
 ```
 
 ```{r}
-# showing model generalisability (MAE - test) as a function of model complexity (number of k) 
+# showing model generalisability  
 df <- data.frame(k = k_values, MAE_test = mae_values, MAE_train = mae_train_values)
 ggplot(df, aes(x = k)) + 
   geom_line(aes(y = MAE_test, color = "Test")) + 
@@ -187,7 +148,7 @@ ggplot(df, aes(x = k)) +
 
 
 ```{r warning=FALSE}
-get_mae(k=15) #getting the mae for the train and test data with k=15
+get_mae(k=15) #getting the mae for the train and test data with k=15 as example
 ```
 
 
@@ -195,10 +156,10 @@ get_mae(k=15) #getting the mae for the train and test data with k=15
 ### Code for trying to find an optimal k
 
 ```{r}
-# Determine optimal k value
+# Determinen the optimal k value
 optimal_k <- k_values[which.min(mae_values)]
 
-# Print results
+# Print the corresponding results
 cat("Optimal k value for generalizability:", optimal_k, "\n")
 cat("MAE on test set for optimal k value:", mae_values[which.min(mae_values)], "\n")
 cat("MAE on training set for optimal k value:", mae_train_values[which.min(mae_values)], "\n")
