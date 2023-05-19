@@ -262,6 +262,7 @@ eval_model <- function(mod, df_train, df_test){
   df_test <- df_test |> 
     drop_na()
   df_test$fitted <- predict(mod, newdata = df_test)
+
   
   # get metrics tables
   metrics_train <- df_train |> 
@@ -269,6 +270,7 @@ eval_model <- function(mod, df_train, df_test){
   
   metrics_test <- df_test |> 
     yardstick::metrics(GPP_NT_VUT_REF, fitted)
+
   
   # extract values from metrics tables
   rmse_train <- metrics_train |> 
@@ -284,6 +286,7 @@ eval_model <- function(mod, df_train, df_test){
   rsq_test <- metrics_test |> 
     filter(.metric == "rsq") |> 
     pull(.estimate)
+  
   
   # visualise as a scatterplot
   # adding information of metrics as sub-titles
@@ -304,6 +307,7 @@ eval_model <- function(mod, df_train, df_test){
                               RMSE == .(format(rmse_test, digits = 3))),
          title = "Test set") +
     theme_classic()
+  
   
   out <- cowplot::plot_grid(plot_1, plot_2)
   
