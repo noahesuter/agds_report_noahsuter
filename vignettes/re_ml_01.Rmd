@@ -163,7 +163,7 @@ In general a bias-variance trade-off is happening. if k is small, the model has 
 
 ### Hypothesis put to test with a code
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Evaluate KNN model for different values of k
 k_values <- c(1:30)
 mae_values <- sapply(k_values, function(k) get_mae(k)$mae_test)
